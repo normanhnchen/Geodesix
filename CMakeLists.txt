@@ -28,7 +28,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw3webgpu)
 
-add_executable(Geodesix main.cpp)
+add_executable(Geodesix
+    src/main.cpp
+    src/request.cpp
+    src/inspect.cpp
+)
+
+target_include_directories(Geodesix PRIVATE include)
+
 target_link_libraries(Geodesix PRIVATE glfw webgpu glfw3webgpu)
 
 target_copy_webgpu_binaries(Geodesix)
