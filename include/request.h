@@ -4,4 +4,4 @@
 
 
 WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const * options);
-WGPUDevice requestDeviceSync(WGPUAdapter, WGPUDeviceDescriptor const * descriptor);
+WGPUDevice requestDeviceSync(WGPUInstance instance, WGPUAdapter adaptor, WGPUDeviceDescriptor const * descriptor);

@@ -8,6 +8,8 @@
 #include "inspect.h"
 
 
+// Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
+// MIT License
 int main() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW!" << std::endl;
@@ -54,16 +56,13 @@ int main() {
         return -1;
     }
 
-    // The instance is no longer needed after getting the adapter
-    wgpuInstanceRelease(instance);
-
     WGPUDeviceDescriptor deviceDesc = {};
     deviceDesc.nextInChain = nullptr;
     deviceDesc.requiredFeatureCount = 0; // We do not require any specific feature
     deviceDesc.requiredLimits = nullptr; // We do not require any specific limit
     deviceDesc.defaultQueue.nextInChain = nullptr;
 
-    WGPUDevice device = requestDeviceSync(adapter, &deviceDesc);
+    WGPUDevice device = requestDeviceSync(instance, adapter, &deviceDesc);
 
     WGPUQueue queue = wgpuDeviceGetQueue(device);
 
@@ -75,6 +74,7 @@ int main() {
     // inspectAdapter(adapter);
     // inspectDevice(device);
 
+    /* Window loop */
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
@@ -83,6 +83,7 @@ int main() {
     wgpuDeviceRelease(device);
     wgpuAdapterRelease(adapter);
     wgpuSurfaceRelease(surface);
+    wgpuInstanceRelease(instance);
     glfwTerminate();
 
     return 0;

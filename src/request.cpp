@@ -1,11 +1,22 @@
 #include <cassert>
+#include <chrono>
+#include <thread>
 #include <iostream>
-#include <string_view>
 #include <webgpu/webgpu.h>
 
 #include "request.h"
 
 
+void sleepForMilliseconds(unsigned int milliseconds) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+}
+
+
+/*
+ * Utility function to get a WebGPU adapter
+ * Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
+ * MIT License
+ */
 WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const * options) {
     struct UserData {
         WGPUAdapter adapter = nullptr;
@@ -13,8 +24,19 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
     };
     UserData userData;
 
-    auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, void * pUserData1, void * pUserData2) {
-        UserData& userData = *reinterpret_cast<UserData*>(pUserData1);
+    // The callback must be a non-capturing (the brackets [] are empty) so
+    // that it behaves like a regular C function which
+    // wgpuInstanceRequestAdapter expects
+    auto onAdapterRequestEnded = [](
+        WGPURequestAdapterStatus status,
+        WGPUAdapter adapter,
+        WGPUStringView message,
+        void* userData1,
+        void* // userData2: not needed for this callback
+    ) {
+        // In a C function, we input userData1 as void*, so
+        // reinterpret userData1 as a UserData object when called below
+        UserData& userData = *reinterpret_cast<UserData*>(userData1);
         if (status == WGPURequestAdapterStatus_Success) {
             userData.adapter = adapter;
         } else {
@@ -24,30 +46,54 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
     };
 
     WGPURequestAdapterCallbackInfo callbackInfo = {};
+    callbackInfo.nextInChain = nullptr;
+    callbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
     callbackInfo.callback = onAdapterRequestEnded;
     callbackInfo.userdata1 = &userData;
+    callbackInfo.userdata2 = nullptr;
 
-    wgpuInstanceRequestAdapter(
-        instance,
-        options,
-        callbackInfo
-    );
+    wgpuInstanceRequestAdapter(instance, options, callbackInfo);
 
-    assert(userData.requestEnded);
+    // Check for pending async operations
+    wgpuInstanceProcessEvents(instance);
+
+    while (!userData.requestEnded) {
+        // Sleep to avoid requesting too often
+        sleepForMilliseconds(200);
+
+        // Check for pending async operations
+        wgpuInstanceProcessEvents(instance);
+    }
 
     return userData.adapter;
 }
 
 
-WGPUDevice requestDeviceSync(WGPUAdapter adapter, WGPUDeviceDescriptor const * descriptor) {
+/*
+ * Utility function to get a WebGPU device
+ * Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
+ * MIT License
+ */
+WGPUDevice requestDeviceSync(WGPUInstance instance, WGPUAdapter adapter, WGPUDeviceDescriptor const * descriptor) {
     struct UserData {
         WGPUDevice device = nullptr;
         bool requestEnded = false;
     };
     UserData userData;
 
-    auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void * pUserData1, void * pUserData2) {
-        UserData& userData = *reinterpret_cast<UserData*>(pUserData1);
+    // The callback must be a non-capturing (the brackets [] are empty) so
+    // that it behaves like a regular C function which
+    // wgpuInstanceRequestAdapter expects
+    auto onDeviceRequestEnded = [](
+        WGPURequestDeviceStatus status,
+        WGPUDevice device,
+        WGPUStringView message,
+        void* userData1,
+        void* // userData2: not needed for this callback
+    ) {
+        // In a C function, we input userData1 as void*, so
+        // reinterpret userData1 as a UserData object when called below
+        UserData& userData = *reinterpret_cast<UserData*>(userData1);
         if (status == WGPURequestDeviceStatus_Success) {
             userData.device = device;
         } else {
@@ -57,16 +103,23 @@ WGPUDevice requestDeviceSync(WGPUAdapter adapter, WGPUDeviceDescriptor const * d
     };
 
     WGPURequestDeviceCallbackInfo callbackInfo = {};
+    callbackInfo.nextInChain = nullptr;
+    callbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
     callbackInfo.callback = onDeviceRequestEnded;
     callbackInfo.userdata1 = &userData;
+    callbackInfo.userdata2 = nullptr;
 
-    wgpuAdapterRequestDevice(
-        adapter,
-        descriptor,
-        callbackInfo
-    );
+    wgpuAdapterRequestDevice(adapter, descriptor, callbackInfo);
 
-    assert(userData.requestEnded);
+    // Check for pending async operations
+    wgpuInstanceProcessEvents(instance);
+    while (!userData.requestEnded) {
+        // Sleep to avoid requesting too often
+        sleepForMilliseconds(200);
+
+        // Check for pending async operations
+        wgpuInstanceProcessEvents(instance);
+    }
 
     return userData.device;
 }
