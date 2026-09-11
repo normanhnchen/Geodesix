@@ -6,6 +6,7 @@
 
 #include "request.h"
 #include "inspect.h"
+#include "util.h"
 
 
 // Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)

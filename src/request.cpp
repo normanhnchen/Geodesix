@@ -5,11 +5,7 @@
 #include <webgpu/webgpu.h>
 
 #include "request.h"
-
-
-void sleepForMilliseconds(unsigned int milliseconds) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-}
+#include "util.h"
 
 
 /*
