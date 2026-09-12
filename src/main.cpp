@@ -54,21 +54,36 @@ int main() {
 
     if (!adapter) {
         std::cerr << "Failed to find a WebGPU adapter!" << std::endl;
+        wgpuSurfaceRelease(surface);
+        wgpuInstanceRelease(instance);
+        glfwTerminate();
         return -1;
     }
 
     WGPUDeviceDescriptor deviceDesc = {};
     deviceDesc.nextInChain = nullptr;
+    deviceDesc.label.data = "Device";
     deviceDesc.requiredFeatureCount = 0; // We do not require any specific feature
     deviceDesc.requiredLimits = nullptr; // We do not require any specific limit
     deviceDesc.defaultQueue.nextInChain = nullptr;
 
     WGPUDevice device = requestDeviceSync(instance, adapter, &deviceDesc);
 
+    if (!device) {
+        std::cerr << "Failed to find a device!" << std::endl;
+        wgpuSurfaceRelease(surface);
+        wgpuInstanceRelease(instance);
+        glfwTerminate();
+    }
+
     WGPUQueue queue = wgpuDeviceGetQueue(device);
 
     if (!queue) {
         std::cerr << "Failed to get the command queue!" << std::endl;
+        wgpuAdapterRelease(adapter);
+        wgpuSurfaceRelease(surface);
+        wgpuInstanceRelease(instance);
+        glfwTerminate();
         return -1;
     }
 
@@ -78,6 +93,66 @@ int main() {
     /* Window loop */
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        // Command Encoder
+        // ---------------
+        WGPUCommandEncoderDescriptor encoderDesc = {};
+        encoderDesc.label.data = "Command Encoder";
+        WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+
+        if (!encoder) {
+            std::cerr << "Failed to get the command encoder!" << std::endl;
+            break;
+        }
+
+        wgpuCommandEncoderInsertDebugMarker(encoder, toWgpuStringView("Do something"));
+        
+        // Command Buffer
+        // --------------
+        WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
+        cmdBufferDescriptor.label = toWgpuStringView("Command buffer");
+        WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+        // Release the encoder after it is finished
+        wgpuCommandEncoderRelease(encoder);
+
+        // Submit the command queue
+        wgpuQueueSubmit(queue, 1, &command);
+        // Release the command buffer after it is done
+        wgpuCommandBufferRelease(command);
+
+        auto onQueuedWorkDone = [](
+            WGPUQueueWorkDoneStatus status,
+            void* userdata1,
+            void* // userdata2: not needed for this callback
+        ) {
+            // Display a warning when status is not success
+            if (status != WGPUQueueWorkDoneStatus_Success) {
+                std::cout << "Warning: wgpuQueueOnSubmittedWorkDone failed!" << std::endl;
+            } else {
+                std::cout << "Frame finished on GPU" << std::endl;
+            }
+
+            // Interpret userdata1 as a pointer to a boolean (and turn it into a
+            // mutable reference), then turn it to 'true'
+            bool& workDone = *reinterpret_cast<bool*>(userdata1);
+            workDone = true;
+        };
+
+        bool workDone = false;
+
+        WGPUQueueWorkDoneCallbackInfo callbackInfo = {};
+        callbackInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+        callbackInfo.callback = onQueuedWorkDone;
+        callbackInfo.userdata1 = &workDone;
+
+        // Add the async operation to the queue
+        wgpuQueueOnSubmittedWorkDone(queue, callbackInfo);
+
+        // Check for pending async operations
+        wgpuInstanceProcessEvents(instance);
+        while (!workDone) {
+            wgpuInstanceProcessEvents(instance);
+        }
     }
 
     wgpuQueueRelease(queue);

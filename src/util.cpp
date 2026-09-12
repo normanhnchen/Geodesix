@@ -23,6 +23,16 @@ std::string_view toStdStringView(WGPUStringView wgpuStringView) {
 
 // Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
 // MIT License
+WGPUStringView toWgpuStringView(std::string_view stdStringView) {
+	return {
+        stdStringView.data(),
+        stdStringView.size()
+    };
+}
+
+
+// Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
+// MIT License
 void sleepForMilliseconds(unsigned int milliseconds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
