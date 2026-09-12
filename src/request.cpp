@@ -10,8 +10,8 @@
 
 /*
  * Utility function to get a WebGPU adapter
- * Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
- * MIT License
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
  */
 WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const * options) {
     struct UserData {
@@ -67,8 +67,8 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions 
 
 /*
  * Utility function to get a WebGPU device
- * Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
- * MIT License
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
  */
 WGPUDevice requestDeviceSync(WGPUInstance instance, WGPUAdapter adapter, WGPUDeviceDescriptor const * descriptor) {
     struct UserData {

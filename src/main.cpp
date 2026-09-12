@@ -9,8 +9,8 @@
 #include "util.h"
 
 
-// Adapted from LearnWebGPU-Code by Élie Michel (https://github.com/eliemichel/LearnWebGPU-Code)
-// MIT License
+// Adapted from LearnWebGPU-Code (MIT License)
+// See THIRD_PARTY_NOTICES.md#learnwebgpu-code
 int main() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW!" << std::endl;
