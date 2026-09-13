@@ -33,6 +33,7 @@ add_executable(Geodesix
     src/request.cpp
     src/inspect.cpp
     src/util.cpp
+    src/application.cpp
 )
 
 target_include_directories(Geodesix PRIVATE include)

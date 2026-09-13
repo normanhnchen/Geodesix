@@ -1,8 +1,8 @@
-#include <iostream>
-#include <webgpu/webgpu.h>
-
 #include "inspect.h"
 #include "util.h"
+
+#include <webgpu/webgpu.h>
+#include <iostream>
 
 
 // Adapted from LearnWebGPU-Code (MIT License)

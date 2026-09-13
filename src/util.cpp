@@ -1,9 +1,11 @@
+#include "util.h"
+
 #include <webgpu/webgpu.h>
+
 #include <iostream>
 #include <chrono>
 #include <thread>
 
-#include "util.h"
 
 
 // Adapted from LearnWebGPU-Code (MIT License)

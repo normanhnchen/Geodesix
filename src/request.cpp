@@ -1,11 +1,14 @@
+#include "request.h"
+#include "util.h"
+
+#include <webgpu/webgpu.h>
+
 #include <cassert>
 #include <chrono>
 #include <thread>
 #include <iostream>
-#include <webgpu/webgpu.h>
 
-#include "request.h"
-#include "util.h"
+
 
 
 /*
