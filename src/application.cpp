@@ -27,6 +27,10 @@ bool Application::IsRunning() {
     return !glfwWindowShouldClose(m_window);
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 void Application::MainLoop() {
     glfwPollEvents();
 
@@ -90,6 +94,10 @@ GLFWwindow* Application::InitWindow() {
     return window;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUInstance Application::InitInstance() {
     WGPUInstance instance = wgpuCreateInstance(nullptr);
     CheckWgpuInstance(instance);
@@ -97,6 +105,10 @@ WGPUInstance Application::InitInstance() {
     return instance;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUSurface Application::InitSurface() {
     WGPUSurface surface = glfwCreateWindowWGPUSurface(m_instance, m_window);
     CheckWgpuSurface(surface);
@@ -104,6 +116,10 @@ WGPUSurface Application::InitSurface() {
     return surface;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUAdapter Application::InitAdapter() {
     WGPURequestAdapterOptions adapterOpts = {};
     adapterOpts.nextInChain = nullptr;
@@ -114,6 +130,10 @@ WGPUAdapter Application::InitAdapter() {
     return adapter;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUDevice Application::InitDevice() {
     WGPUDeviceDescriptor deviceDesc = {};
     deviceDesc.nextInChain = nullptr;
@@ -130,6 +150,10 @@ WGPUDevice Application::InitDevice() {
     return device;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUQueue Application::InitQueue() {
     WGPUQueue queue = wgpuDeviceGetQueue(m_device);
     CheckWgpuQueue(queue);
@@ -141,6 +165,10 @@ WGPUQueue Application::InitQueue() {
 /* ---- Main Loop Functions ---- */
 
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUCommandEncoder Application::CreateCommandEncoder() {
     WGPUCommandEncoderDescriptor encoderDesc = {};
     encoderDesc.label = toWgpuStringView("Command Encoder");
@@ -150,6 +178,10 @@ WGPUCommandEncoder Application::CreateCommandEncoder() {
     return encoder;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUCommandBuffer Application::FinishCommandEncoder() {
     WGPUCommandBufferDescriptor commandDescriptor = {};
     commandDescriptor.label = toWgpuStringView("Command Buffer");
@@ -164,6 +196,10 @@ WGPUCommandBuffer Application::FinishCommandEncoder() {
     return command;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 void Application::SubmitCommandBuffer() {
     wgpuQueueSubmit(m_queue, 1, &m_command);
     // Release the command buffer after it is finished
@@ -171,6 +207,10 @@ void Application::SubmitCommandBuffer() {
     m_command = nullptr;
 }
 
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 void Application::WaitForQueueDone() {
     auto onQueuedWorkDone = [](
         WGPUQueueWorkDoneStatus status,

@@ -5,8 +5,10 @@
 #include <iostream>
 
 
-// Adapted from LearnWebGPU-Code (MIT License)
-// See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 void inspectAdapter(WGPUAdapter adapter) {
 	WGPULimits supportedLimits = {};
 	supportedLimits.nextInChain = nullptr;
@@ -52,8 +54,10 @@ void inspectAdapter(WGPUAdapter adapter) {
 	wgpuAdapterInfoFreeMembers(properties);
 }
 
-// Adapted from LearnWebGPU-Code (MIT License)
-// See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 void inspectDevice(WGPUDevice device) {
     
     WGPUSupportedFeatures features = {};

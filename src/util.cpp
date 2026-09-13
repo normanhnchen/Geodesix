@@ -8,8 +8,10 @@
 
 
 
-// Adapted from LearnWebGPU-Code (MIT License)
-// See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 std::string_view toStdStringView(WGPUStringView wgpuStringView) {
     if (wgpuStringView.data == nullptr) {
         return std::string_view();
@@ -23,8 +25,10 @@ std::string_view toStdStringView(WGPUStringView wgpuStringView) {
 }
 
 
-// Adapted from LearnWebGPU-Code (MIT License)
-// See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 WGPUStringView toWgpuStringView(std::string_view stdStringView) {
 	return {
         stdStringView.data(),
@@ -33,8 +37,10 @@ WGPUStringView toWgpuStringView(std::string_view stdStringView) {
 }
 
 
-// Adapted from LearnWebGPU-Code (MIT License)
-// See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+/**
+ * Adapted from LearnWebGPU-Code (MIT License)
+ * See THIRD_PARTY_NOTICES.md#learnwebgpu-code
+ */
 void sleepForMilliseconds(unsigned int milliseconds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
