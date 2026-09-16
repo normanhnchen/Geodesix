@@ -48,6 +48,7 @@ private:
     vk::raii::PhysicalDevice m_physicalDevice = nullptr;
     vk::raii::Device m_device = nullptr;
     vk::raii::Queue m_graphicsQueue = nullptr;
+    vk::raii::SurfaceKHR m_surface = nullptr;
 
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName
@@ -104,4 +105,6 @@ private:
     bool IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevice);
 
     void CreateLogicalDevice();
+
+    void CreateSurface();
 };
