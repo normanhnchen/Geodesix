@@ -41,10 +41,11 @@ public:
     void Run();
 
 private:
-    GLFWwindow* window = nullptr;
-    vk::raii::Context context;
-	vk::raii::Instance instance = nullptr;
-    vk::raii::DebugUtilsMessengerEXT debugMessenger = nullptr;
+    GLFWwindow* m_window = nullptr;
+    vk::raii::Context m_context;
+	vk::raii::Instance m_instance = nullptr;
+    vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
+    vk::raii::PhysicalDevice m_physicalDevice = nullptr;
 
     void InitWindow();
     void InitVulkan();
@@ -92,4 +93,7 @@ private:
 
         return vk::False;
     }
+
+    void SelectPhysicalDevice();
+    bool IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevice);
 };

@@ -12,6 +12,7 @@
 #include <memory>
 #include <stdexcept>
 #include <cstring>
+#include <map>
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 
@@ -46,28 +47,29 @@ void Application::InitWindow() {
      */
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Geodesix", nullptr, nullptr);
+    m_window = glfwCreateWindow(WIDTH, HEIGHT, "Geodesix", nullptr, nullptr);
 }
 
 void Application::InitVulkan() {
     CreateInstance();
     SetupDebugMessenger();
+    SelectPhysicalDevice();
 }
 
 void Application::MainLoop() {
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(m_window)) {
         glfwPollEvents();
     }
 }
 
 void Application::Cleanup() {
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
 void Application::CreateInstance() {
     constexpr vk::ApplicationInfo appInfo{
-        .pApplicationName = "Hello Triangle",
+        .pApplicationName = "Geodesix",
         .applicationVersion = VK_MAKE_VERSION( 1, 0, 0 ),
         .pEngineName = "No Engine",
         .engineVersion = VK_MAKE_VERSION( 1, 0, 0 ),
@@ -82,7 +84,7 @@ void Application::CreateInstance() {
 #endif
 
     // Check if the required layers are supported by the Vulkan implementation.
-    auto layerProperties = context.enumerateInstanceLayerProperties();
+    auto layerProperties = m_context.enumerateInstanceLayerProperties();
     auto unsupportedLayerIt = std::ranges::find_if(
         requiredLayers,
         [&layerProperties](auto const &requiredLayer) {
@@ -102,7 +104,7 @@ void Application::CreateInstance() {
     std::vector<const char*> requiredExtensions = GetRequiredInstanceExtensions();
 
     // Check if the required extensions are supported by the Vulkan implementation
-    auto extensions = context.enumerateInstanceExtensionProperties();
+    auto extensions = m_context.enumerateInstanceExtensionProperties();
     
 #ifdef DEBUG_PRINT_EXTENSIONS
     // Debug: print available extensions to the console
@@ -139,7 +141,7 @@ void Application::CreateInstance() {
     createInfo.flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
 #endif
 
-    instance = vk::raii::Instance(context, createInfo);
+    m_instance = vk::raii::Instance(m_context, createInfo);
 }
 
 std::vector<const char*> Application::GetRequiredInstanceExtensions() {
@@ -182,7 +184,106 @@ void Application::SetupDebugMessenger() {
         .messageType = messageTypeFlags,
         .pfnUserCallback = &DebugCallback
     };
-    debugMessenger = instance.createDebugUtilsMessengerEXT(
+    m_debugMessenger = m_instance.createDebugUtilsMessengerEXT(
         debugUtilsMessengerCreateInfoEXT
     );
+}
+
+void Application::SelectPhysicalDevice() {
+    auto physicalDevices = m_instance.enumeratePhysicalDevices();
+    if (physicalDevices.empty()) {
+        throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+    }
+
+    // Use an ordered map to automatically sort candidates by increasing score
+    std::multimap<int, vk::raii::PhysicalDevice> candidates;
+    for (const auto& pd : physicalDevices) {
+        if (!IsDeviceSuitable(pd)) {
+            continue;
+        }
+        auto deviceProperties = pd.getProperties();
+        auto deviceFeatures = pd.getFeatures();
+        uint32_t score = 0;
+
+        // Discrete GPUs are significantly more performant
+        if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
+            score += 1000;
+        }
+
+        // Maximum possible size of textures
+        score += deviceProperties.limits.maxImageDimension2D;
+
+        candidates.insert(std::make_pair(score, pd));
+    }
+
+    // Check if the best candidate is suitable
+    if (!candidates.empty()) {
+        // Get the key of the last entry in the list (the best candidate)
+        if (candidates.rbegin()->first > 0) {
+            // Get the best candidate's value
+            m_physicalDevice = candidates.rbegin()->second;
+        }
+    } else {
+        throw std::runtime_error("Failed to find a suitable GPU!");
+    }
+}
+
+bool Application::IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevice) {
+    // Check if the device supports Vulkan API version 1.3
+    bool supportsVulkan1_3 = physicalDevice.getProperties().apiVersion >= vk::ApiVersion13;
+
+    auto queueFamilies = physicalDevice.getQueueFamilyProperties();
+    bool supportsGraphics = std::ranges::any_of(
+        queueFamilies, [](auto const &qfp) {
+            return !!(qfp.queueFlags & vk::QueueFlagBits::eGraphics);
+        }
+    );
+
+    std::vector<const char*> requiredDeviceExtension = {
+        vk::KHRSwapchainExtensionName
+    };
+
+    // Check if each required device extension is supported by the physical device
+    auto availableDeviceExtensions = physicalDevice.enumerateDeviceExtensionProperties();
+    bool supportsAllRequiredExtensions = std::ranges::all_of(
+        requiredDeviceExtension,
+        [&availableDeviceExtensions](
+            auto const & requiredDeviceExtension
+        ) {
+            return std::ranges::any_of(
+                availableDeviceExtensions,
+                [requiredDeviceExtension](
+                    auto const & availableDeviceExtension
+                ) {
+                    return strcmp(availableDeviceExtension.extensionName, requiredDeviceExtension) == 0;
+                }
+            );
+        }
+    );
+
+    // Check if the required features are supported by the physical device
+    auto features = physicalDevice.template
+        getFeatures2<
+            vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features,
+            vk::PhysicalDeviceVulkan13Features,
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        >();
+    bool supportsRequiredFeatures = (
+        features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
+        features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
+        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState
+    );
+
+    // Check if the physical device meets all of the required criteria
+    if (
+        supportsVulkan1_3 &&
+        supportsGraphics &&
+        supportsAllRequiredExtensions &&
+        supportsRequiredFeatures
+    ) {
+        return true;
+    } else {
+        return false;
+    }
 }
