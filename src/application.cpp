@@ -54,6 +54,7 @@ void Application::InitVulkan() {
     CreateInstance();
     SetupDebugMessenger();
     SelectPhysicalDevice();
+    CreateLogicalDevice();
 }
 
 void Application::MainLoop() {
@@ -239,10 +240,6 @@ bool Application::IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevic
         }
     );
 
-    std::vector<const char*> requiredDeviceExtension = {
-        vk::KHRSwapchainExtensionName
-    };
-
     // Check if each required device extension is supported by the physical device
     auto availableDeviceExtensions = physicalDevice.enumerateDeviceExtensionProperties();
     bool supportsAllRequiredExtensions = std::ranges::all_of(
@@ -286,4 +283,67 @@ bool Application::IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevic
     } else {
         return false;
     }
+}
+
+void Application::CreateLogicalDevice() {
+    /* Get a queue with graphics capabilities */
+    std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physicalDevice.getQueueFamilyProperties();
+    auto graphicsQueueFamilyProperty = std::ranges::find_if(
+        queueFamilyProperties,
+        [](auto const &qfp) {
+            return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+        }
+    );
+    auto graphicsIndex = static_cast<uint32_t>(std::distance(
+        queueFamilyProperties.begin(),
+        graphicsQueueFamilyProperty
+    ));
+
+    // Decide which queues have relative priority over other queues
+    float queuePriorities[] = {
+        0.5f
+    };
+
+    vk::DeviceQueueCreateInfo deviceQueueCreateInfo {
+        .queueFamilyIndex = graphicsIndex,
+        .queueCount = 1,
+        .pQueuePriorities = queuePriorities
+    };
+
+    // Create a chain of feature structures
+    vk::StructureChain<
+        vk::PhysicalDeviceFeatures2,
+        vk::PhysicalDeviceVulkan11Features,
+        vk::PhysicalDeviceVulkan13Features,
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+    >
+    featureChain = {
+        /* Physical device features */
+        {
+            // Empty for now
+        },
+        /* Vulkan 1.1 features */
+        {
+            .shaderDrawParameters = true
+        },
+        /* Vulkan 1.3 feature */
+        {
+            .dynamicRendering = true
+        },
+        /* Extended dynamic state features */
+        {
+            .extendedDynamicState = true
+        }
+    };
+
+    vk::DeviceCreateInfo deviceCreateInfo{
+        .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+        .queueCreateInfoCount = 1,
+        .pQueueCreateInfos = &deviceQueueCreateInfo,
+        .enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtension.size()),
+        .ppEnabledExtensionNames = requiredDeviceExtension.data()
+    };
+
+    m_device = vk::raii::Device(m_physicalDevice, deviceCreateInfo);
+    m_graphicsQueue = vk::raii::Queue(m_device, graphicsIndex, 0);
 }

@@ -46,6 +46,12 @@ private:
 	vk::raii::Instance m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
     vk::raii::PhysicalDevice m_physicalDevice = nullptr;
+    vk::raii::Device m_device = nullptr;
+    vk::raii::Queue m_graphicsQueue = nullptr;
+
+    std::vector<const char*> requiredDeviceExtension = {
+        vk::KHRSwapchainExtensionName
+    };
 
     void InitWindow();
     void InitVulkan();
@@ -96,4 +102,6 @@ private:
 
     void SelectPhysicalDevice();
     bool IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevice);
+
+    void CreateLogicalDevice();
 };
