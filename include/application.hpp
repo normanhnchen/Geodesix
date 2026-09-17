@@ -24,9 +24,28 @@ import vulkan_hpp;
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-/* Debug definitions */
+
+/* ==== Debug Macros ==== */
+
 #define DEBUG_VALIDATION_LAYERS
 // #define DEBUG_PRINT_EXTENSIONS
+
+/**
+ * ---- Present Modes ----
+ * These macros are used in Application::ChooseSwapPresentMode()
+ */
+// #define DEBUG_PRESENT_IMMEDIATE
+// #define DEBUG_PRESENT_FIFO
+// #define DEBUG_PRESENT_FIFO_RELAXED
+// #define DEBUG_PRESENT_MAILBOX
+
+/**
+ * The macro below defines the minimum image count strategy used in
+ * Application::ChooseSwapMinImageCount(). If the macro is defined,  we use the tutorial's
+ * explanatory minimum count minImageCount + 1. Otherwise, we use the tutorial's shipped version
+ * std::max(3u, surfaceCapabilities.minImageCount).
+ */
+// #define DEBUG_MIN_IMAGE_COUNT_LEGACY
 
 
 constexpr uint32_t WIDTH  = 800;
@@ -49,6 +68,10 @@ private:
     vk::raii::Device m_device = nullptr;
     vk::raii::Queue m_graphicsQueue = nullptr;
     vk::raii::SurfaceKHR m_surface = nullptr;
+    vk::raii::SwapchainKHR m_swapChain = nullptr;
+    std::vector<vk::Image> m_swapChainImages;
+    vk::SurfaceFormatKHR m_swapChainSurfaceFormat;
+    vk::Extent2D m_swapChainExtent;
 
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName
@@ -107,4 +130,10 @@ private:
     void CreateLogicalDevice();
 
     void CreateSurface();
+
+    void CreateSwapChain();
+    vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& availableFormats);
+    vk::PresentModeKHR ChooseSwapPresentMode(std::vector<vk::PresentModeKHR> const& availablePresentModes);
+    vk::Extent2D ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const &capabilities);
+    uint32_t ChooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR const &surfaceCapabilities);
 };

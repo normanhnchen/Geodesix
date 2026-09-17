@@ -12,6 +12,8 @@
 #include <memory>
 #include <stdexcept>
 #include <cstring>
+#include <cstdint>
+#include <limits>
 #include <map>
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
@@ -56,6 +58,7 @@ void Application::InitVulkan() {
     CreateSurface();
     SelectPhysicalDevice();
     CreateLogicalDevice();
+    CreateSwapChain();
 }
 
 void Application::MainLoop() {
@@ -361,4 +364,167 @@ void Application::CreateSurface() {
     }
 
     m_surface = vk::raii::SurfaceKHR(m_instance, surface);
+}
+
+void Application::CreateSwapChain() {
+    vk::SurfaceCapabilitiesKHR surfaceCapabilities = m_physicalDevice.getSurfaceCapabilitiesKHR(*m_surface);
+    m_swapChainExtent = ChooseSwapExtent(surfaceCapabilities);
+    uint32_t minImageCount = ChooseSwapMinImageCount(surfaceCapabilities);
+    
+    std::vector<vk::SurfaceFormatKHR> availableFormats = m_physicalDevice.getSurfaceFormatsKHR(*m_surface);
+    m_swapChainSurfaceFormat = ChooseSwapSurfaceFormat(availableFormats);
+
+    std::vector<vk::PresentModeKHR> availablePresentModes = m_physicalDevice.getSurfacePresentModesKHR(*m_surface);
+    vk::PresentModeKHR presentMode = ChooseSwapPresentMode(availablePresentModes);
+
+    vk::SwapchainCreateInfoKHR swapChainCreateInfo{
+        .surface = *m_surface,
+        .minImageCount = minImageCount,
+        .imageFormat = m_swapChainSurfaceFormat.format,
+        .imageColorSpace = m_swapChainSurfaceFormat.colorSpace,
+        .imageExtent = m_swapChainExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageSharingMode = vk::SharingMode::eExclusive,
+        .preTransform = surfaceCapabilities.currentTransform,
+        .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
+        .presentMode = presentMode,
+        .clipped = true,
+        /**
+         * !!!!!!!!!!!!!!!!!!!!
+         * NOTE: ignore for now
+         * !!!!!!!!!!!!!!!!!!!!
+         */
+        .oldSwapchain = nullptr
+    };
+
+    m_swapChain = vk::raii::SwapchainKHR(m_device, swapChainCreateInfo);
+    m_swapChainImages = m_swapChain.getImages();
+}
+
+vk::SurfaceFormatKHR Application::ChooseSwapSurfaceFormat(
+    std::vector<vk::SurfaceFormatKHR> const &availableFormats
+) {
+    // Make sure there is an available format
+    assert(!availableFormats.empty());
+
+    // Checked if the preferred SRGB format is available
+    const auto formatIt = std::ranges::find_if(
+        availableFormats,
+        [](const auto &format) {
+            return (
+                /* SRGB results in more accurate perceived colors */
+                format.format == vk::Format::eB8G8R8A8Srgb &&
+                format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear
+            );
+        }
+    );
+
+    if (formatIt != availableFormats.end()) {
+        // Return the preferred available format
+        return *formatIt;
+    } else {
+        // By default settle with the first available format
+        return availableFormats[0];
+    }
+}
+
+vk::PresentModeKHR Application::ChooseSwapPresentMode(
+    std::vector<vk::PresentModeKHR> const &availablePresentModes
+) {
+    /**
+     * - vk::PresentModeKHR::eImmediate
+     *      Swap chain images are displayed immediately which may result in screen tearing.
+     * - vk::PresentModeKHR::eFifo
+     *      The swap chain is a queue of images where the screen displays images refreshed from the
+     *      queue. When the queue is full, it blocks the application. This mode is similar to
+     *      vertical sync.
+     * - vk::PresentModeKHR::eFifoRelaxed
+     *      This mode is the same as the vk::PresentModeKHR::eFifo except when waiting for the
+     *      queue to fill, the image is displayed immediately which may result in screen tearing.
+     * - vk::PresentModeKHR::eMailbox
+     *      This is another variation of the vk::PresentModeKHR::eFifo except when the queue is
+     *      full images already in the queue are replaced with newer ones. This mode is commonly
+     *      known as triple buffering. This mode can be slightly more demanding to use than the
+     *      FIFO mode.
+     */
+
+#ifdef DEBUG_PRESENT_IMMEDIATE
+    return vk::PresentModeKHR::eImmediate;
+#endif
+#ifdef DEBUG_PRESENT_FIFO
+    return vk::PresentModeKHR::eFifo;
+#endif
+#ifdef DEBUG_PRESENT_FIFO_RELAXED
+    return vk::PresentModeKHR::eFifoRelaxed;
+#endif
+#ifdef DEBUG_PRESENT_MAILBOX
+    return vk::PresentModeKHR::eMailbox;
+#endif
+
+    assert(std::ranges::any_of(availablePresentModes, [](auto presentMode) { return presentMode == vk::PresentModeKHR::eFifo; }));
+    if (std::ranges::any_of(
+        availablePresentModes,
+        [](const vk::PresentModeKHR value) {
+            return vk::PresentModeKHR::eMailbox == value;
+        }
+    )) {
+        return vk::PresentModeKHR::eMailbox;
+    } else {
+        // Default to vk::PresentModeKHR::eFifo; guaranteed to be available
+        return vk::PresentModeKHR::eFifo;
+    }
+}
+
+vk::Extent2D Application::ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const &capabilities) {
+    // The window's extent is only std::numeric_limits<uint32_t>::max() if the
+    // surface does not already want a fixed size
+    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+        /* The surface already wants an exact size */
+        return capabilities.currentExtent;
+    } else {
+        /* The surface has no size it specifically wants */
+
+        int width, height;
+        // Get the actual screen size in pixels
+        glfwGetFramebufferSize(m_window, &width, &height);
+
+        // Clamp to the surface's support range
+        return {
+            std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+            std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
+        };
+    }
+}
+
+uint32_t Application::ChooseSwapMinImageCount(
+    vk::SurfaceCapabilitiesKHR const &surfaceCapabilities
+) {
+    /**
+     * Choose a specific minimum number of images to use in the swap chain.
+     * 
+     * The actual minimum number may cause the driver to wait before getting another image,
+     * therefore the Vulkan tutorial recommends to request one more than the minimum. Also, the
+     * minimum number of images must be less than the max amount supported by the surface.
+     */
+
+#ifdef DEBUG_MIN_IMAGE_COUNT_LEGACY
+    /* Tutorial's explanatory version */
+
+    uint32_t minImageCount = surfaceCapabilities.minImageCount + 1u;
+#else
+    /* Tutorial's actual shipped version */
+    
+    uint32_t minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
+#endif
+
+    // NOTE: Vulkan's maxImageCount == 0 means that there is no upper limit
+    if (
+        (0 < surfaceCapabilities.maxImageCount) &&
+        (minImageCount > surfaceCapabilities.maxImageCount)
+    ) {
+        minImageCount = surfaceCapabilities.maxImageCount;
+    }
+
+    return minImageCount;
 }
