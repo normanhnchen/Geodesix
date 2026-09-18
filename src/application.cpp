@@ -59,7 +59,7 @@ void Application::InitWindow() {
  * functions in the *required dependency order*:
  * 
  * (Instance -> (Validation Layers & Debug messenger) -> Surface -> Physical Device -> Logical
- *  Device -> Swap Chain)
+ *  Device -> Swap Chain -> Image Views)
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
  */
@@ -70,6 +70,7 @@ void Application::InitVulkan() {
     SelectPhysicalDevice();
     CreateLogicalDevice();
     CreateSwapChain();
+    CreateImageViews();
 }
 
 /**
@@ -618,7 +619,13 @@ vk::PresentModeKHR Application::ChooseSwapPresentMode(
     return vk::PresentModeKHR::eMailbox;
 #endif
 
-    assert(std::ranges::any_of(availablePresentModes, [](auto presentMode) { return presentMode == vk::PresentModeKHR::eFifo; }));
+    // Make sure there is an available present mode
+    assert(std::ranges::any_of(
+        availablePresentModes,
+        [](auto presentMode) {
+            return presentMode == vk::PresentModeKHR::eFifo;
+        }
+    ));
     if (std::ranges::any_of(
         availablePresentModes,
         [](const vk::PresentModeKHR value) {
@@ -693,4 +700,50 @@ uint32_t Application::ChooseSwapMinImageCount(
     }
 
     return minImageCount;
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/02_Image_views.html
+ */
+void Application::CreateImageViews() {
+    // Make sure there is atleast an ImageView
+    assert(m_swapChainImageViews.empty());
+
+    vk::ImageViewCreateInfo imageViewCreateInfo{
+        // 2D screen
+        .viewType = vk::ImageViewType::e2D,
+        .format = m_swapChainSurfaceFormat.format,
+        .subresourceRange = {
+            vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+        }
+    };
+
+    // The color channels can be swizzled around here
+    imageViewCreateInfo.components = {
+        /* Use the default mapping: vk::ComponentSwizzle::eIdentity */
+        vk::ComponentSwizzle::eIdentity,
+        vk::ComponentSwizzle::eIdentity,
+        vk::ComponentSwizzle::eIdentity,
+        vk::ComponentSwizzle::eIdentity
+    };
+
+    // The image's details and access can be described here
+    imageViewCreateInfo.subresourceRange = {
+        // Color target
+        .aspectMask = vk::ImageAspectFlagBits::eColor,
+        // Use no mipmapping levels
+        .levelCount = 1,
+        // Use no multiple layers; only one layer
+        .layerCount = 1
+    };
+
+    // Add the ImageViews to the swap chain
+    for (auto &image : m_swapChainImages) {
+        imageViewCreateInfo.image = image;
+        // Add inplace to the end of the ImageViews to add to the swap chain
+        m_swapChainImageViews.emplace_back(
+            m_device,
+            imageViewCreateInfo
+        );
+    }
 }
