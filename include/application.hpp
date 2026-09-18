@@ -1,11 +1,3 @@
-/**
- * ============================================================
- * Adapted from the official Vulkan Tutorial
- * https://docs.vulkan.org/tutorial/latest/00_Introduction.html
- * ============================================================
- */
-
-
 #pragma once
 
 
@@ -32,7 +24,7 @@ import vulkan_hpp;
 
 /**
  * ---- Present Modes ----
- * These macros are used in Application::ChooseSwapPresentMode()
+ * These macros are used in Application::ChooseSwapPresentMode
  */
 // #define DEBUG_PRESENT_IMMEDIATE
 // #define DEBUG_PRESENT_FIFO
@@ -41,7 +33,7 @@ import vulkan_hpp;
 
 /**
  * The macro below defines the minimum image count strategy used in
- * Application::ChooseSwapMinImageCount(). If the macro is defined,  we use the tutorial's
+ * Application::ChooseSwapMinImageCount. If the macro is defined,  we use the tutorial's
  * explanatory minimum count minImageCount + 1. Otherwise, we use the tutorial's shipped version
  * std::max(3u, surfaceCapabilities.minImageCount).
  */
@@ -55,6 +47,11 @@ const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
+/**
+ * The main application, including a Vulkan & GLFW backend.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
+ */
 class Application {
 public:
     void Run();
@@ -86,29 +83,15 @@ private:
     void SetupDebugMessenger();
     std::vector<const char*> GetRequiredInstanceExtensions();
 
-    // Debug messenger (callback) for the validation layers
+    /**
+     * @brief Debug messenger callback for the validation layers.
+     * 
+     * See Application::SetupDebugMessenger for the debug messenger creation.
+     * 
+     * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/02_Validation_layers.html
+     */
     static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
-        /**
-         * The severity of the message is specified with one of the following flags
-         * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
-         *      Diagnostic message from Vulkan components (e.g. loader, layers, drivers)
-         * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
-         *      Informational message (e.g. creation of a resource)
-         * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
-         *      Message about behavior that may come from an application bug
-         * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
-         *      Message about behavior that is invalid
-         */
         vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-        /**
-         * The message type is specified with one of the following values
-         * - vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral:
-         *      Some event has happened that is unrelated to the specification or performance
-         * - vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation:
-         *      Something has happened that violates the specification or indicates a possible mistake
-         * - vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance:
-         *      Potential non-optimal use of Vulkan
-         */
         vk::DebugUtilsMessageTypeFlagsEXT type,
         const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
         void * pUserData

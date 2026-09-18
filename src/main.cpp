@@ -1,11 +1,3 @@
-/**
- * ============================================================
- * Adapted from the official Vulkan Tutorial
- * https://docs.vulkan.org/tutorial/latest/00_Introduction.html
- * ============================================================
- */
-
-
 #define VULKAN_HPP_NO_CONSTRUCTORS
 
 #if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
@@ -24,6 +16,11 @@ import vulkan_hpp;
 #include "application.hpp"
 
 
+/**
+ * Runs the application.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
+ */
 int main() {
     try {
         Application app;

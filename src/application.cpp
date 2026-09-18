@@ -1,11 +1,3 @@
-/**
- * ============================================================
- * Adapted from the official Vulkan Tutorial
- * https://docs.vulkan.org/tutorial/latest/00_Introduction.html
- * ============================================================
- */
-
-
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
@@ -30,6 +22,11 @@ import vulkan_hpp;
 #include "application.hpp"
 
 
+/**
+ * @brief Runs the application.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
+ */
 void Application::Run() {
     InitWindow();
     InitVulkan();
@@ -37,6 +34,11 @@ void Application::Run() {
     Cleanup();
 }
 
+/**
+ * @brief Initializes the GLFW window.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
+ */
 void Application::InitWindow() {
     glfwInit();
 
@@ -52,6 +54,15 @@ void Application::InitWindow() {
     m_window = glfwCreateWindow(WIDTH, HEIGHT, "Geodesix", nullptr, nullptr);
 }
 
+/**
+ * @brief Initializes the Vulkan library and calls all of the required helper initialization
+ * functions in the *required dependency order*:
+ * 
+ * (Instance -> (Validation Layers & Debug messenger) -> Surface -> Physical Device -> Logical
+ *  Device -> Swap Chain)
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
+ */
 void Application::InitVulkan() {
     CreateInstance();
     SetupDebugMessenger();
@@ -61,17 +72,41 @@ void Application::InitVulkan() {
     CreateSwapChain();
 }
 
+/**
+ * @brief Main rendering loop.
+ * 
+ * TODO: currently only polls GLFW events; add actual rendering implementations and Vulkan API
+ * calls.
+ */
 void Application::MainLoop() {
     while (!glfwWindowShouldClose(m_window)) {
         glfwPollEvents();
     }
 }
 
+/**
+ * @brief Destroys the window and terminates GLFW before terminating the program. Vulkan resources
+ * are cleaned up via RAII.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
+ */
 void Application::Cleanup() {
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
+/**
+ * @brief Initializes the Vulkan instance.
+ * 
+ * The Vulkan instance bridges the gap between the Vulkan API and the application.
+ * 
+ * The function validates that the required layers and extensions are supported before instance
+ * creation, then creates the instance with a Vulkan RAII object for automatic destruction.
+ * 
+ * @throws std::runtime_error if a required validation layer or extension is unsupported.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/01_Instance.html
+ */
 void Application::CreateInstance() {
     constexpr vk::ApplicationInfo appInfo{
         .pApplicationName = "Geodesix",
@@ -149,6 +184,14 @@ void Application::CreateInstance() {
     m_instance = vk::raii::Instance(m_context, createInfo);
 }
 
+/**
+ * @brief Gets the required Vulkan and GLFW extensions before Vulkan instance creation.
+ * 
+ * This function is used to get the required extensions during instance creation (see
+ * Application::CreateInstance).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/01_Instance.html
+ */
 std::vector<const char*> Application::GetRequiredInstanceExtensions() {
     // Get the required instance extensions from GLFW
     uint32_t glfwExtensionCount = 0;
@@ -170,6 +213,43 @@ std::vector<const char*> Application::GetRequiredInstanceExtensions() {
     return requiredExtensions;
 }
 
+/**
+ * @brief Initializes the debug messenger for the validation layers.
+ * 
+ * Because the Vulkan API is designed to have minimal driver overhead and be as performant as
+ * possible, errors can be silent and will result in crashes or unexpected behavior. Therefore,
+ * validation layers (they are optional) are used to check for errors.
+ * 
+ * The debug messenger returns error messages to the terminal that are caught by the validation
+ * layers.
+ * 
+ * The severity of the message is specified with one of the following flags:
+ * 
+ * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+ *      Diagnostic message from Vulkan components (e.g. loader, layers, drivers)
+ * 
+ * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+ *      Informational message (e.g. creation of a resource)
+ * 
+ * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+ *      Message about behavior that may come from an application bug
+ * 
+ * - vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+ *      Message about behavior that is invalid
+ * 
+ * The message type is specified with one of the following values:
+ * 
+ * - vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral:
+ *      Some event has happened that is unrelated to the specification or performance
+ * 
+ * - vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation:
+ *      Something has happened that violates the specification or indicates a possible mistake
+ * 
+ * - vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance:
+ *      Potential non-optimal use of Vulkan
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/02_Validation_layers.html
+ */
 void Application::SetupDebugMessenger() {
 #ifndef DEBUG_VALIDATION_LAYERS
     return;
@@ -194,6 +274,21 @@ void Application::SetupDebugMessenger() {
     );
 }
 
+/**
+ * @brief Selects the best Vulkan physical device to use.
+ * 
+ * The Vulkan physical device object is only used for retrieving its properties and capabilities to
+ * be used for operations. The Vulkan logical device (see Application::CreateLogicalDevice) uses
+ * the physical device's features and will be used as the handle for Vulkan operations after the
+ * physical device has been initiated.
+ * 
+ * The function selects the device candidate based on its "score," influenced by the device's
+ * properties and if it is a discrete GPU.
+ * 
+ * @throws std::runtime_error if no suitable GPU was found.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/03_Physical_devices_and_queue_families.html
+ */
 void Application::SelectPhysicalDevice() {
     auto physicalDevices = m_instance.enumeratePhysicalDevices();
     if (physicalDevices.empty()) {
@@ -233,6 +328,15 @@ void Application::SelectPhysicalDevice() {
     }
 }
 
+/**
+ * @brief Checks if a Vulkan physical device object has the required Vulkan extensions and features
+ * needed for the application.
+ * 
+ * This function is used during Vulkan physical device selection (see
+ * Application::SelectPhysicalDevice).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/03_Physical_devices_and_queue_families.html
+ */
 bool Application::IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevice) {
     // Check if the device supports Vulkan API version 1.3
     bool supportsVulkan1_3 = physicalDevice.getProperties().apiVersion >= vk::ApiVersion13;
@@ -289,6 +393,19 @@ bool Application::IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevic
     }
 }
 
+/**
+ * @brief Creates the Vulkan logical device and specifies the queue families used.
+ * 
+ * The Vulkan logical device uses the physical device's features and is used as the handle for
+ * Vulkan operations.
+ * 
+ * The Vulkan queue is an asynchronous execution queue that receives commands. Queues are decided
+ * from queue families which represents a set of queues that support a specific set of operations.
+ * 
+ * @throws std::runtime_error if a Vulkan queue could not be found.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html
+ */
 void Application::CreateLogicalDevice() {
     // Get the first index of the queue with graphics capabilities
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physicalDevice.getQueueFamilyProperties();
@@ -357,6 +474,14 @@ void Application::CreateLogicalDevice() {
     m_graphicsQueue = vk::raii::Queue(m_device, queueIndex, 0);
 }
 
+/**
+ * @brief Creates the Vulkan-GLFW window surface.
+ * 
+ * The window surface allows Vulkan rendering to an OS window because the Vulkan API is platform-
+ * agnostic and requires a standardized WSI (Window System Interface) with cross-platform support.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/00_Window_surface.html
+ */
 void Application::CreateSurface() {
     VkSurfaceKHR surface;
     if (glfwCreateWindowSurface(*m_instance, m_window, nullptr, &surface) != VK_SUCCESS) {
@@ -366,6 +491,16 @@ void Application::CreateSurface() {
     m_surface = vk::raii::SurfaceKHR(m_instance, surface);
 }
 
+/**
+ * @brief Creates the Vulkan swap chain.
+ * 
+ * The Vulkan swap chain is a queue (most of the time) that swaps rendered images in its queue to
+ * the window surface (see Application::CreateSurface). This way, only complete images are
+ * displayed and rendering can occur before the image refreshes to prevent screen tearing (in the
+ * commonly-used swap chain modes).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
+ */
 void Application::CreateSwapChain() {
     vk::SurfaceCapabilitiesKHR surfaceCapabilities = m_physicalDevice.getSurfaceCapabilitiesKHR(*m_surface);
     m_swapChainExtent = ChooseSwapExtent(surfaceCapabilities);
@@ -402,6 +537,12 @@ void Application::CreateSwapChain() {
     m_swapChainImages = m_swapChain.getImages();
 }
 
+/**
+ * @brief Chooses a window surface (see Application::CreateSurface) format for the swap chain,
+ * preferred by if color formatting is more accurate.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
+ */
 vk::SurfaceFormatKHR Application::ChooseSwapSurfaceFormat(
     std::vector<vk::SurfaceFormatKHR> const &availableFormats
 ) {
@@ -429,26 +570,41 @@ vk::SurfaceFormatKHR Application::ChooseSwapSurfaceFormat(
     }
 }
 
+/**
+ * @brief Chooses a present mode for the swap chain.
+ * 
+ * The present mode for the window surface is used when displaying an image from the Vulkan queue (
+ * see Application::CreateLogicalDevice).
+ * 
+ * The function chooses vk::PresentModeKHR::eMailbox (triple buffering) by default if available.
+ * Otherwise, it uses vk::PresentModeKHR::eFifo (double buffering) which is guaranteed to be
+ * available.
+ * 
+ * The following present modes can be used:
+ * 
+ * - vk::PresentModeKHR::eImmediate
+ *      Swap chain images are displayed immediately which may result in screen tearing.
+ * 
+ * - vk::PresentModeKHR::eFifo
+ *      The swap chain is a queue of images where the screen displays images refreshed from the
+ *      queue. When the queue is full, it blocks the application. This mode is similar to
+ *      vertical sync.
+ * 
+ * - vk::PresentModeKHR::eFifoRelaxed
+ *      This mode is the same as the vk::PresentModeKHR::eFifo except when waiting for the
+ *      queue to fill, the image is displayed immediately which may result in screen tearing.
+ * 
+ * - vk::PresentModeKHR::eMailbox
+ *      This is another variation of the vk::PresentModeKHR::eFifo except when the queue is
+ *      full images already in the queue are replaced with newer ones. This mode is commonly
+ *      known as triple buffering. This mode can be slightly more demanding to use than the
+ *      FIFO mode.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
+ */
 vk::PresentModeKHR Application::ChooseSwapPresentMode(
     std::vector<vk::PresentModeKHR> const &availablePresentModes
 ) {
-    /**
-     * - vk::PresentModeKHR::eImmediate
-     *      Swap chain images are displayed immediately which may result in screen tearing.
-     * - vk::PresentModeKHR::eFifo
-     *      The swap chain is a queue of images where the screen displays images refreshed from the
-     *      queue. When the queue is full, it blocks the application. This mode is similar to
-     *      vertical sync.
-     * - vk::PresentModeKHR::eFifoRelaxed
-     *      This mode is the same as the vk::PresentModeKHR::eFifo except when waiting for the
-     *      queue to fill, the image is displayed immediately which may result in screen tearing.
-     * - vk::PresentModeKHR::eMailbox
-     *      This is another variation of the vk::PresentModeKHR::eFifo except when the queue is
-     *      full images already in the queue are replaced with newer ones. This mode is commonly
-     *      known as triple buffering. This mode can be slightly more demanding to use than the
-     *      FIFO mode.
-     */
-
 #ifdef DEBUG_PRESENT_IMMEDIATE
     return vk::PresentModeKHR::eImmediate;
 #endif
@@ -476,6 +632,12 @@ vk::PresentModeKHR Application::ChooseSwapPresentMode(
     }
 }
 
+/**
+ * @brief Chooses a Vulkan window extent (screen size in pixels) to draw to the window surface (see
+ * Application::CreateSurface).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
+ */
 vk::Extent2D Application::ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const &capabilities) {
     // The window's extent is only std::numeric_limits<uint32_t>::max() if the
     // surface does not already want a fixed size
@@ -497,12 +659,16 @@ vk::Extent2D Application::ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const &cap
     }
 }
 
+/**
+ * @brief Chooses a specific minimum number of images to use in the swap chain (see
+ * Application::CreateSwapChain).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
+ */
 uint32_t Application::ChooseSwapMinImageCount(
     vk::SurfaceCapabilitiesKHR const &surfaceCapabilities
 ) {
     /**
-     * Choose a specific minimum number of images to use in the swap chain.
-     * 
      * The actual minimum number may cause the driver to wait before getting another image,
      * therefore the Vulkan tutorial recommends to request one more than the minimum. Also, the
      * minimum number of images must be less than the max amount supported by the surface.
