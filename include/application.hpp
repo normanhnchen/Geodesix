@@ -4,6 +4,9 @@
 #include <vector>
 #include <iostream>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <stdexcept>
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 
@@ -46,6 +49,18 @@ constexpr uint32_t HEIGHT = 600;
 const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
+
+const std::filesystem::path SHADER_SPIRV_DIR = CMAKE_SHADER_SPIRV_DIR;
+const std::string SHADER_MAIN_VERT_PATH = std::string(SHADER_SPIRV_DIR / "main.vert.spv");
+const std::string SHADER_MAIN_FRAG_PATH = std::string(SHADER_SPIRV_DIR / "main.frag.spv");
+
+/**
+ * The entry point is the function where the shader starts executing. In GLSL, there can only be
+ * one entry point per file (that being void main()). In other languages like Slang, there can be
+ * multiple entry points where each could represent a shader stage. For GLSL, we default to "main"
+ * for all shader modules.
+ */
+constexpr const char* SHADER_ENTRY_POINT = "main";
 
 /**
  * The main application, including a Vulkan & GLFW backend.
@@ -122,4 +137,29 @@ private:
     uint32_t ChooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR const &surfaceCapabilities);
 
     void CreateImageViews();
+
+    /**
+     * @brief Reads the bytes of a specified file.
+     * 
+     * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/01_Shader_modules.html
+     */
+    static std::vector<char> ReadFile(const std::string &filePath) {
+        // Open the file at the end (ate) in binary mode
+		std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+		if (!file.is_open()) {
+			throw std::runtime_error("Failed to open file!");
+		}
+        // Get the exact number of bytes the file has and allocate it to a buffer
+		std::vector<char> buffer(file.tellg());
+        // Reset the read cursor to beginning
+		file.seekg(0, std::ios::beg);
+        // Read the raw bytes
+		file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+		file.close();
+		return buffer;
+	}
+
+    [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;
+
+    void CreateGraphicsPipeline();
 };

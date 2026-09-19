@@ -71,6 +71,7 @@ void Application::InitVulkan() {
     CreateLogicalDevice();
     CreateSwapChain();
     CreateImageViews();
+    CreateGraphicsPipeline();
 }
 
 /**
@@ -703,6 +704,8 @@ uint32_t Application::ChooseSwapMinImageCount(
 }
 
 /**
+ * Create Vulkan ImageViews to fill up the swap chain.
+ * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/02_Image_views.html
  */
 void Application::CreateImageViews() {
@@ -746,4 +749,47 @@ void Application::CreateImageViews() {
             imageViewCreateInfo
         );
     }
+}
+
+/**
+ * @brief Create a Vulkan shader module from code (in bytes).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/01_Shader_modules.html
+ */
+[[nodiscard]] vk::raii::ShaderModule Application::CreateShaderModule(const std::vector<char>& code) const {
+    vk::ShaderModuleCreateInfo createInfo{
+        .codeSize = code.size() * sizeof(char),
+        .pCode = reinterpret_cast<const uint32_t *>(code.data())
+    };
+    vk::raii::ShaderModule shaderModule{m_device, createInfo};
+
+    return shaderModule;
+}
+
+/**
+ * @brief Create the graphics pipeline for rendering.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/00_Introduction.html
+ */
+void Application::CreateGraphicsPipeline() {
+    auto shaderCodeMainVert = ReadFile(SHADER_MAIN_VERT_PATH);
+    auto shaderCodeMainFrag = ReadFile(SHADER_MAIN_FRAG_PATH);
+
+    vk::raii::ShaderModule shaderModuleMainVert = CreateShaderModule(shaderCodeMainVert);
+    vk::raii::ShaderModule shaderModuleMainFrag = CreateShaderModule(shaderCodeMainFrag);
+
+    vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
+        .stage = vk::ShaderStageFlagBits::eVertex,
+        .module = shaderModuleMainVert,
+        .pName = SHADER_ENTRY_POINT
+    };
+    vk::PipelineShaderStageCreateInfo fragShaderStageInfo{
+        .stage = vk::ShaderStageFlagBits::eFragment,
+        .module = shaderModuleMainFrag,
+        .pName = SHADER_ENTRY_POINT
+    };
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {
+        vertShaderStageInfo,
+        fragShaderStageInfo
+    };
 }
