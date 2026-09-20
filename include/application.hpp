@@ -21,12 +21,10 @@ import vulkan_hpp;
 #include <GLFW/glfw3.h>
 
 #include "window.hpp"
+#include "vulkan_context.hpp"
 
 
 /* ==== Debug Macros ==== */
-
-#define DEBUG_VALIDATION_LAYERS
-// #define DEBUG_PRINT_EXTENSIONS
 
 /**
  * ---- Present Modes ----
@@ -121,10 +119,6 @@ constexpr uint32_t HEIGHT = 600;
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::vector<char const*> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"
-};
-
 const std::filesystem::path SHADER_SPIRV_DIR = CMAKE_SHADER_SPIRV_DIR;
 const std::string SHADER_MAIN_VERT_PATH = std::string(SHADER_SPIRV_DIR / "main.vert.spv");
 const std::string SHADER_MAIN_FRAG_PATH = std::string(SHADER_SPIRV_DIR / "main.frag.spv");
@@ -148,13 +142,8 @@ public:
 
 private:
     Window m_window {WIDTH, HEIGHT, "Geodesix"};
-    vk::raii::Context m_context;
-	vk::raii::Instance m_instance = nullptr;
-    vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
-    vk::raii::PhysicalDevice m_physicalDevice = nullptr;
-    vk::raii::Device m_device = nullptr;
-    vk::raii::Queue m_queue = nullptr;
-    vk::raii::SurfaceKHR m_surface = nullptr;
+    VulkanContext m_vulkanContext {m_window};
+
     vk::raii::SwapchainKHR m_swapChain = nullptr;
     std::vector<vk::Image> m_swapChainImages;
     vk::SurfaceFormatKHR m_swapChainSurfaceFormat;
@@ -168,52 +157,11 @@ private:
     std::vector<vk::raii::Semaphore> m_renderFinishedSemaphores;
     std::vector<vk::raii::Fence> m_inFlightFences;
 
-    uint32_t m_queueIndex = 0;
     uint32_t m_frameIndex = 0;
 
-    std::vector<const char*> requiredDeviceExtension = {
-        vk::KHRSwapchainExtensionName
-    };
-
-    void InitWindow();
     void InitVulkan();
     void MainLoop();
     void Cleanup();
-
-    void CreateInstance();
-    void SetupDebugMessenger();
-    std::vector<const char*> GetRequiredInstanceExtensions();
-
-    /**
-     * @brief Debug messenger callback for the validation layers.
-     * 
-     * See Application::SetupDebugMessenger for the debug messenger creation.
-     * 
-     * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/02_Validation_layers.html
-     */
-    static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
-        vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-        vk::DebugUtilsMessageTypeFlagsEXT type,
-        const vk::DebugUtilsMessengerCallbackDataEXT * pCallbackData,
-        void * pUserData
-    ) {
-        if (
-            severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning ||
-            severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
-        ) {
-            // Message is important enough to show because of the severity
-            std::cerr << "validation layer: type " << to_string(type) << " msg: " << pCallbackData->pMessage << std::endl;
-        }
-
-        return vk::False;
-    }
-
-    void SelectPhysicalDevice();
-    bool IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDevice);
-
-    void CreateLogicalDevice();
-
-    void CreateSurface();
 
     void CreateSwapChain();
     vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& availableFormats);
