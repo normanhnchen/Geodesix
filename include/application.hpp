@@ -158,6 +158,10 @@ private:
     std::vector<vk::raii::ImageView> m_swapChainImageViews;
     vk::raii::PipelineLayout m_pipelineLayout = nullptr;
     vk::raii::Pipeline m_graphicsPipeline = nullptr;
+    vk::raii::CommandPool m_commandPool = nullptr;
+    vk::raii::CommandBuffer m_commandBuffer = nullptr;
+
+    uint32_t m_queueIndex = 0;
 
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName
@@ -235,4 +239,17 @@ private:
     [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;
 
     void CreateGraphicsPipeline();
+
+    void CreateCommandPool();
+    void CreateCommandBuffer();
+    void RecordCommandBuffer(uint32_t imageIndex);
+    void TransitionImageLayout(
+        uint32_t imageIndex,
+        vk::ImageLayout oldLayout,
+        vk::ImageLayout newLayout,
+        vk::AccessFlags2 srcAccessMask,
+        vk::AccessFlags2 dstAccessMask,
+        vk::PipelineStageFlags2 srcStageMask,
+        vk::PipelineStageFlags2 dstStageMask
+    );
 };

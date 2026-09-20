@@ -72,6 +72,8 @@ void Application::InitVulkan() {
     CreateSwapChain();
     CreateImageViews();
     CreateGraphicsPipeline();
+    CreateCommandPool();
+    CreateCommandBuffer();
 }
 
 /**
@@ -413,17 +415,17 @@ void Application::CreateLogicalDevice() {
     std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_physicalDevice.getQueueFamilyProperties();
 
     // Bitwise operator; get the max possible uint32_t
-    uint32_t queueIndex = ~0;
+    m_queueIndex = ~0;
 
     for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++) {
         if ((queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) &&
             m_physicalDevice.getSurfaceSupportKHR(qfpIndex, *m_surface)) {
             // Found a queue family that supports both Vulkan graphics and present surfaces
-            queueIndex = qfpIndex;
+            m_queueIndex = qfpIndex;
             break;
         }
     }
-    if (queueIndex == ~0) {
+    if (m_queueIndex == ~0) {
         throw std::runtime_error("Could not find a queue for Vulkan graphics and present surfaces!");
     }
 
@@ -433,7 +435,7 @@ void Application::CreateLogicalDevice() {
     };
 
     vk::DeviceQueueCreateInfo deviceQueueCreateInfo {
-        .queueFamilyIndex = queueIndex,
+        .queueFamilyIndex = m_queueIndex,
         .queueCount = 1,
         .pQueuePriorities = queuePriorities
     };
@@ -480,7 +482,7 @@ void Application::CreateLogicalDevice() {
     };
 
     m_device = vk::raii::Device(m_physicalDevice, deviceCreateInfo);
-    m_graphicsQueue = vk::raii::Queue(m_device, queueIndex, 0);
+    m_graphicsQueue = vk::raii::Queue(m_device, m_queueIndex, 0);
 }
 
 /**
@@ -919,4 +921,168 @@ void Application::CreateGraphicsPipeline() {
         nullptr,
         pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
     );
+}
+
+/**
+ * @brief Create a Vulkan command pool.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
+ */
+void Application::CreateCommandPool() {
+    vk::CommandPoolCreateInfo poolInfo{
+        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = m_queueIndex
+    };
+
+    m_commandPool = vk::raii::CommandPool(m_device, poolInfo);
+}
+
+/**
+ * @brief Allocate a Vulkan command buffer.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
+ */
+void Application::CreateCommandBuffer() {
+    vk::CommandBufferAllocateInfo allocInfo{
+        .commandPool = m_commandPool,
+        /**
+         * The level determines if the command buffer is a primary or secondary command buffer.
+         * 
+         * - vk::CommandBufferLevel::ePrimary:
+         *      Can be submitted to a command queue.
+         * 
+         * - vk::CommandBufferLevel::eSecondary:
+         *      Cannot be submitted to a command queue but can be called from primary command
+         *      buffers.
+         */
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+
+    m_commandBuffer = std::move(vk::raii::CommandBuffers(m_device, allocInfo).front());
+}
+
+/**
+ * @brief Record a Vulkan command buffer.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
+ */
+void Application::RecordCommandBuffer(uint32_t imageIndex) {
+    m_commandBuffer.begin({});
+    
+    // Swapchain image: undefined -> vk::ImageLayout::eColorAttachmentOptimal
+    TransitionImageLayout(
+        imageIndex,
+        vk::ImageLayout::eUndefined, // Old layout
+        vk::ImageLayout::eColorAttachmentOptimal, // New layout
+        {}, // srcAccessMask
+        vk::AccessFlagBits2::eColorAttachmentWrite, // dstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput // dstStage
+    );
+
+    vk::ClearValue clearColor = vk::ClearColorValue(
+        /* Black color */
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+
+    vk::RenderingAttachmentInfo attachmentInfo = {
+        .imageView = m_swapChainImageViews[imageIndex],
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        // Image preprocessing
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        // Image postprocessing
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = clearColor
+    };
+
+    vk::RenderingInfo renderingInfo = {
+        .renderArea = {
+            .offset = {0, 0},
+            .extent = m_swapChainExtent
+        },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &attachmentInfo
+    };
+
+    m_commandBuffer.beginRendering(renderingInfo);
+    m_commandBuffer.bindPipeline(
+        vk::PipelineBindPoint::eGraphics,
+        *m_graphicsPipeline
+    );
+    m_commandBuffer.setViewport(
+        0,
+        vk::Viewport(
+            0.0f,
+            0.0f,
+            static_cast<float>(m_swapChainExtent.width),
+            static_cast<float>(m_swapChainExtent.height),
+            0.0f,
+            1.0f
+        )
+    );
+    m_commandBuffer.setScissor(
+        0,
+        vk::Rect2D(
+            vk::Offset2D(0, 0),
+            m_swapChainExtent
+        )
+    );
+
+    m_commandBuffer.draw(3, 1, 0, 0);
+
+    m_commandBuffer.endRendering();
+
+    // Swapchain image: vk::ImageLayout::eColorAttachmentOptimal -> vk::ImageLayout::ePresentSrcKHR
+    TransitionImageLayout (
+        imageIndex,
+        vk::ImageLayout::eColorAttachmentOptimal, // Old layout
+        vk::ImageLayout::ePresentSrcKHR, // New layout
+        vk::AccessFlagBits2::eColorAttachmentWrite, // srcAccessMask
+        {}, // dstAccessMask
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
+        vk::PipelineStageFlagBits2::eBottomOfPipe // dstStage
+    );
+
+    m_commandBuffer.end();
+}
+
+/**
+ * @brief Transition a Vulkan image layout to and from being suitable for rendering.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
+ */
+void Application::TransitionImageLayout(
+    uint32_t imageIndex,
+    vk::ImageLayout oldLayout,
+    vk::ImageLayout newLayout,
+    vk::AccessFlags2 srcAccessMask,
+    vk::AccessFlags2 dstAccessMask,
+    vk::PipelineStageFlags2 srcStageMask,
+    vk::PipelineStageFlags2 dstStageMask
+) {
+	vk::ImageMemoryBarrier2 barrier = {
+        .srcStageMask = srcStageMask,
+        .srcAccessMask = srcAccessMask,
+        .dstStageMask = dstStageMask,
+        .dstAccessMask = dstAccessMask,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = m_swapChainImages[imageIndex],
+        .subresourceRange = {
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1}};
+    
+    vk::DependencyInfo dependency_info = {
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier};
+    
+    m_commandBuffer.pipelineBarrier2(dependency_info);
 }
