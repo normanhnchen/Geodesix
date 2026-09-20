@@ -20,6 +20,8 @@ import vulkan_hpp;
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "window.hpp"
+
 
 /* ==== Debug Macros ==== */
 
@@ -78,15 +80,14 @@ import vulkan_hpp;
  * 
  * vk::PrimitiveTopology::eTriangleList
  */
-#define TOPOLOGY_TRIANGLE_LIST
+// #define TOPOLOGY_TRIANGLE_LIST
 /** 
  * Draw triangles where every second and third vertex of every triangle are reused for the next
  * triangle's first two vertices.
  * 
  * vk::PrimitiveTopology::eTriangleStrip
-
  */
-// #define TOPOLOGY_TRIANGLE_STRIP
+#define TOPOLOGY_TRIANGLE_STRIP
 
 /**
  * ---- Polygon Mode ----
@@ -146,7 +147,7 @@ public:
     void Run();
 
 private:
-    GLFWwindow* m_window = nullptr;
+    Window m_window {WIDTH, HEIGHT, "Geodesix"};
     vk::raii::Context m_context;
 	vk::raii::Instance m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
@@ -170,8 +171,6 @@ private:
     uint32_t m_queueIndex = 0;
     uint32_t m_frameIndex = 0;
 
-    bool m_framebufferResized = false;
-
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName
     };
@@ -180,11 +179,6 @@ private:
     void InitVulkan();
     void MainLoop();
     void Cleanup();
-
-    static void FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-        app->m_framebufferResized = true;
-    }
 
     void CreateInstance();
     void SetupDebugMessenger();

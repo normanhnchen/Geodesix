@@ -29,31 +29,10 @@ import vulkan_hpp;
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
  */
 void Application::Run() {
-    InitWindow();
+    m_window.Init();
     InitVulkan();
     MainLoop();
     Cleanup();
-}
-
-/**
- * @brief Initializes the GLFW window.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
- */
-void Application::InitWindow() {
-    glfwInit();
-
-    // Since GLFW creates an OpenGL context by default, we tell it to not create one
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-    m_window = glfwCreateWindow(WIDTH, HEIGHT, "Geodesix", nullptr, nullptr);
-
-    // Attach an arbitrary pointer to the window so the GLFW callback functions can access the
-    // member variables
-    glfwSetWindowUserPointer(m_window, this);
-
-    glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
 }
 
 /**
@@ -86,8 +65,8 @@ void Application::InitVulkan() {
  * calls.
  */
 void Application::MainLoop() {
-    while (!glfwWindowShouldClose(m_window)) {
-        glfwPollEvents();
+    while (!m_window.ShouldClose()) {
+        m_window.PollEvents();
         DrawFrame();
     }
 
@@ -103,9 +82,8 @@ void Application::MainLoop() {
  */
 void Application::Cleanup() {
     CleanupSwapChain();
-    
-    glfwDestroyWindow(m_window);
-    glfwTerminate();
+
+    m_window.Cleanup();
 }
 
 /**
@@ -496,19 +474,12 @@ void Application::CreateLogicalDevice() {
 }
 
 /**
- * @brief Creates the Vulkan-GLFW window surface.
- * 
- * The window surface allows Vulkan rendering to an OS window because the Vulkan API is platform-
- * agnostic and requires a standardized WSI (Window System Interface) with cross-platform support.
+ * @brief Creates the Vulkan RAII window surface object.
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/00_Window_surface.html
  */
 void Application::CreateSurface() {
-    VkSurfaceKHR surface;
-    if (glfwCreateWindowSurface(*m_instance, m_window, nullptr, &surface) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create the GLFW-Vulkan window surface!");
-    }
-
+    VkSurfaceKHR surface = m_window.CreateVulkanSurface(*m_instance);
     m_surface = vk::raii::SurfaceKHR(m_instance, surface);
 }
 
@@ -675,8 +646,7 @@ vk::Extent2D Application::ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const &cap
         /* The surface has no size it specifically wants */
 
         int width, height;
-        // Get the actual screen size in pixels
-        glfwGetFramebufferSize(m_window, &width, &height);
+        m_window.GetFramebufferSize(&width, &height);
 
         // Clamp to the surface's support range
         return {
@@ -1173,9 +1143,9 @@ void Application::DrawFrame() {
         (result == vk::Result::eSuboptimalKHR) ||
         // The surface properties don't match anymore
         (result == vk::Result::eErrorOutOfDateKHR) ||
-        m_framebufferResized
+        m_window.Resized()
     ) {
-        m_framebufferResized = false;
+        m_window.ResetResizedFlag();
         RecreateSwapChain();
     } else {
         // On any other error besides eSuccess, presentKHR throws an exception
@@ -1219,17 +1189,9 @@ void Application::CreateSyncObjects() {
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
  */
 void Application::RecreateSwapChain() {
-    /* Pause until the window is unminimized */
-    int width = 0, height = 0;
-    glfwGetFramebufferSize(m_window, &width, &height);
-    while (
-        (width == 0 || height == 0) &&
-        !glfwWindowShouldClose(m_window)
-    ) {
-        glfwGetFramebufferSize(m_window, &width, &height);
-        glfwWaitEvents();
-    }
-    if (glfwWindowShouldClose(m_window)) {
+    // Pause until the window is unminimized
+    m_window.MinimizedLoop();
+    if (m_window.ShouldClose()) {
         return;
     }
 
