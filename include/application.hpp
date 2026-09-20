@@ -42,6 +42,77 @@ import vulkan_hpp;
  */
 // #define DEBUG_MIN_IMAGE_COUNT_LEGACY
 
+/**
+ * ---- Topology Modes ---
+ * These macros are used in Appication::CreateGraphicsPipeline for the inputAssembly struct.
+ * 
+ * They represent how the geometry will be drawn from vertices sent to the GPU and the primitive.
+ * 
+ * NOTE: only one of the macros should be defined or else it might lead to unexpected behavior!
+ * 
+ * NOTE: for any mode other than eFill, a physical device feature must be enabled (see
+ * Application::CreateLogicalDevice -> featureChain struct)
+ */
+
+/** 
+ * Draw points from vertices.
+ * 
+ * vk::PrimitiveTopology::ePointList
+ */
+// #define TOPOLOGY_POINT_LIST
+/** 
+ * Draw lines between every two vertices (without reusing vertices).
+ * 
+ * vk::PrimitiveTopology::eLineList
+ */
+// #define TOPOLOGY_LINE_LIST
+/** 
+ * Draw lines where the end vertex of every line is used as the start vertex for the next line.
+ * 
+ * vk::PrimitiveTopology::eLineStrip
+ */
+// #define TOPOLOGY_LINE_STRIP
+/** 
+ * Draw triangles from every three vertices (without reusing vertices).
+ * 
+ * vk::PrimitiveTopology::eTriangleList
+ */
+#define TOPOLOGY_TRIANGLE_LIST
+/** 
+ * Draw triangles where every second and third vertex of every triangle are reused for the next
+ * triangle's first two vertices.
+ * 
+ * vk::PrimitiveTopology::eTriangleStrip
+
+ */
+// #define TOPOLOGY_TRIANGLE_STRIP
+
+/**
+ * ---- Polygon Mode ----
+ * 
+ * These macros are used in Application::CreateGraphicsPipeline for the rasterizer struct.
+ * 
+ * NOTE: only one of the macros should be defined or else it might lead to unexpected behavior!
+ */
+
+/**
+ * Fill the area of polygons.
+ * 
+ * vk::PolygonMode::eFill
+ */
+#define POLYGON_FILL
+/**
+ * Draw polygon edges as lines.
+ * 
+ * vk::PolygonMode::eLine
+ */
+// #define POLYGON_LINE
+/**
+ * Draw polygon vertices as points.
+ * 
+ * vk::PolygonMode::ePoint
+ */
+// #define POLYGON_POINT
 
 constexpr uint32_t WIDTH  = 800;
 constexpr uint32_t HEIGHT = 600;
@@ -85,6 +156,7 @@ private:
     vk::SurfaceFormatKHR m_swapChainSurfaceFormat;
     vk::Extent2D m_swapChainExtent;
     std::vector<vk::raii::ImageView> m_swapChainImageViews;
+    vk::raii::PipelineLayout m_pipelineLayout = nullptr;
 
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName

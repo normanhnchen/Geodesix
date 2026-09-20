@@ -448,7 +448,14 @@ void Application::CreateLogicalDevice() {
     featureChain = {
         /* Physical device features */
         {
-            // Empty for now
+#ifdef POLYGON_FILL
+        // Empty
+#else
+        // Anything other than vk::PolygonMode::eFill must enable the fillModeNonSolid feature
+        .features = {
+            .fillModeNonSolid = true
+        }
+#endif
         },
         /* Vulkan 1.1 features */
         {
@@ -792,4 +799,91 @@ void Application::CreateGraphicsPipeline() {
         vertShaderStageInfo,
         fragShaderStageInfo
     };
+
+    std::vector<vk::DynamicState> dynamicStates = {
+        /* Allow these states to be updated during runtime */
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor
+    };
+
+    vk::PipelineDynamicStateCreateInfo dynamicState{
+        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data()
+    };
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{
+#ifdef TOPOLOGY_POINT_LIST
+        .topology = vk::PrimitiveTopology::ePointList,
+#endif
+#ifdef TOPOLOGY_LINE_LIST
+        .topology = vk::PrimitiveTopology::eLineList,
+#endif
+#ifdef TOPOLOGY_LINE_STRIP
+        .topology = vk::PrimitiveTopology::eLineStrip,
+#endif
+#ifdef TOPOLOGY_TRIANGLE_LIST
+        .topology = vk::PrimitiveTopology::eTriangleList,
+#endif
+#ifdef TOPOLOGY_TRIANGLE_STRIP
+        .topology = vk::PrimitiveTopology::eTriangleStrip
+#endif
+    };
+    vk::PipelineViewportStateCreateInfo viewportState{
+        .viewportCount = 1,
+        .scissorCount = 1
+    };
+
+    vk::PipelineRasterizationStateCreateInfo rasterizer{
+        .depthClampEnable = vk::False,
+        .rasterizerDiscardEnable = vk::False,
+#ifdef POLYGON_FILL
+        .polygonMode = vk::PolygonMode::eFill,
+#endif
+#ifdef POLYGON_LINE
+        .polygonMode = vk::PolygonMode::eLine,
+#endif
+#ifdef POLYGON_POINT
+        .polygonMode = vk::PolygonMode::ePoint,
+#endif
+        .cullMode = vk::CullModeFlagBits::eNone,
+        .frontFace = vk::FrontFace::eClockwise,
+        .depthBiasEnable = vk::False,
+        .lineWidth = 1.0f
+    };
+
+    vk::PipelineMultisampleStateCreateInfo multisampling{
+        /**
+         * Disable multisampling.
+         * 
+         * NOTE: enabling this feature in the future will require a GPU feature.
+         */
+        .rasterizationSamples = vk::SampleCountFlagBits::e1,
+        .sampleShadingEnable = vk::False
+    };
+
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment{
+        /**
+         * Disable color blending.
+         */
+        .blendEnable = vk::False,
+        .colorWriteMask = vk::ColorComponentFlagBits::eR |
+            vk::ColorComponentFlagBits::eG |
+            vk::ColorComponentFlagBits::eB |
+            vk::ColorComponentFlagBits::eA
+    };
+
+    vk::PipelineColorBlendStateCreateInfo colorBlending{
+        .logicOpEnable = vk::False,
+        .logicOp = vk::LogicOp::eCopy,
+        .attachmentCount = 1,
+        .pAttachments = &colorBlendAttachment
+    };
+
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
+        .setLayoutCount = 0,
+        .pushConstantRangeCount = 0
+    };
+
+    m_pipelineLayout = vk::raii::PipelineLayout(m_device, pipelineLayoutInfo);
 }

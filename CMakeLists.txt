@@ -91,6 +91,6 @@ add_custom_target(Shaders ALL DEPENDS ${SPIRV_BINARY_FILES})
 add_dependencies(Geodesix Shaders)
 
 # Define the SPIR-V compiled binaries for the CPU side to use
-target_compile_definitions(Geodesix PRIVATE SHADER_SPIRV_DIR="${SPIR_V_DIR}")
+target_compile_definitions(Geodesix PRIVATE CMAKE_SHADER_SPIRV_DIR="${SPIR_V_DIR}")
 
 target_include_directories(Geodesix PRIVATE include)
