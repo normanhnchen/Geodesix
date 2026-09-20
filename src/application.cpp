@@ -886,4 +886,31 @@ void Application::CreateGraphicsPipeline() {
     };
 
     m_pipelineLayout = vk::raii::PipelineLayout(m_device, pipelineLayoutInfo);
+
+    vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &m_swapChainSurfaceFormat.format
+    };
+    vk::GraphicsPipelineCreateInfo graphicsRenderingCreateInfo{
+        .stageCount = 2,
+        .pStages = shaderStages,
+        .pVertexInputState = &vertexInputInfo,
+        .pInputAssemblyState = &inputAssembly,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizer,
+        .pMultisampleState = &multisampling,
+        .pColorBlendState = &colorBlending,
+        .pDynamicState = &dynamicState,
+        .layout = m_pipelineLayout,
+        // Set to nullptr because the render passes will be dynamic
+        .renderPass = nullptr
+    };
+
+    vk::StructureChain<
+        vk::GraphicsPipelineCreateInfo,
+        vk::PipelineRenderingCreateInfo
+    > pipelineCreateInfoChain = {
+        graphicsRenderingCreateInfo,
+        pipelineRenderingCreateInfo
+    };
 }
