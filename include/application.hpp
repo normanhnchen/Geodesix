@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
 
 #if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
 #include <vulkan/vulkan_raii.hpp>
@@ -169,6 +170,8 @@ private:
     uint32_t m_queueIndex = 0;
     uint32_t m_frameIndex = 0;
 
+    bool m_framebufferResized = false;
+
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName
     };
@@ -177,6 +180,11 @@ private:
     void InitVulkan();
     void MainLoop();
     void Cleanup();
+
+    static void FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+        auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+        app->m_framebufferResized = true;
+    }
 
     void CreateInstance();
     void SetupDebugMessenger();
@@ -261,4 +269,7 @@ private:
 
     void DrawFrame();
     void CreateSyncObjects();
+
+    void RecreateSwapChain();
+    void CleanupSwapChain();
 };

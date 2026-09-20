@@ -9,6 +9,7 @@
 #include <map>
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
 
 #if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
 #include <vulkan/vulkan_raii.hpp>
@@ -44,14 +45,15 @@ void Application::InitWindow() {
 
     // Since GLFW creates an OpenGL context by default, we tell it to not create one
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    /**
-     * !!!!!!!!!!!!!!!!!!!!!
-     * NOTE: disable for now
-     * !!!!!!!!!!!!!!!!!!!!!
-     */
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     m_window = glfwCreateWindow(WIDTH, HEIGHT, "Geodesix", nullptr, nullptr);
+
+    // Attach an arbitrary pointer to the window so the GLFW callback functions can access the
+    // member variables
+    glfwSetWindowUserPointer(m_window, this);
+
+    glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
 }
 
 /**
@@ -100,6 +102,8 @@ void Application::MainLoop() {
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
  */
 void Application::Cleanup() {
+    CleanupSwapChain();
+    
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
@@ -1115,13 +1119,27 @@ void Application::DrawFrame() {
     if (fenceResult != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to wait for fence!");
     }
-    m_device.resetFences(*m_inFlightFences[m_frameIndex]);
 
     auto [result, imageIndex] = m_swapChain.acquireNextImage(
         UINT64_MAX, // Timeout
         *m_presentCompleteSemaphores[m_frameIndex],
         nullptr
     );
+
+    if (result == vk::Result::eErrorOutOfDateKHR) {
+        /* The swap chain is incompatible with the surface and can no longer be used to render. */
+        RecreateSwapChain();
+        return;
+    }
+    if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+        /* The surface properties don't match anymore. */
+        assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
+        throw std::runtime_error("Failed to get a new swap chain image!");
+    }
+
+    // Prevent a deadlock by resetting the fence only when we know it will be submitting work later
+    // (we acquired the next image and it passed all of the error checks)
+    m_device.resetFences(*m_inFlightFences[m_frameIndex]);
 
     RecordCommandBuffer(imageIndex);
 
@@ -1149,6 +1167,20 @@ void Application::DrawFrame() {
     };
 
     result = m_queue.presentKHR(presentInfoKHR);
+
+    if (
+        // The swap chain is incompatible with the surface and can no longer be used to render
+        (result == vk::Result::eSuboptimalKHR) ||
+        // The surface properties don't match anymore
+        (result == vk::Result::eErrorOutOfDateKHR) ||
+        m_framebufferResized
+    ) {
+        m_framebufferResized = false;
+        RecreateSwapChain();
+    } else {
+        // On any other error besides eSuccess, presentKHR throws an exception
+        assert(result == vk::Result::eSuccess);
+    }
 
     // Advance the frame counter
     m_frameIndex = (m_frameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -1179,4 +1211,42 @@ void Application::CreateSyncObjects() {
             }
         );
     }
+}
+
+/**
+ * @brief Recreate the Vulkan swap chain and its corresponding objects.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
+ */
+void Application::RecreateSwapChain() {
+    /* Pause until the window is unminimized */
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(m_window, &width, &height);
+    while (
+        (width == 0 || height == 0) &&
+        !glfwWindowShouldClose(m_window)
+    ) {
+        glfwGetFramebufferSize(m_window, &width, &height);
+        glfwWaitEvents();
+    }
+    if (glfwWindowShouldClose(m_window)) {
+        return;
+    }
+
+    m_device.waitIdle();
+
+    CleanupSwapChain();
+
+    CreateSwapChain();
+    CreateImageViews();
+}
+
+/**
+ * @brief Clean up swap chain objects.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
+ */
+void Application::CleanupSwapChain() {
+    m_swapChainImageViews.clear();
+    m_swapChain = nullptr;
 }
