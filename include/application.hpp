@@ -149,7 +149,7 @@ private:
     vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;
     vk::raii::PhysicalDevice m_physicalDevice = nullptr;
     vk::raii::Device m_device = nullptr;
-    vk::raii::Queue m_graphicsQueue = nullptr;
+    vk::raii::Queue m_queue = nullptr;
     vk::raii::SurfaceKHR m_surface = nullptr;
     vk::raii::SwapchainKHR m_swapChain = nullptr;
     std::vector<vk::Image> m_swapChainImages;
@@ -160,6 +160,9 @@ private:
     vk::raii::Pipeline m_graphicsPipeline = nullptr;
     vk::raii::CommandPool m_commandPool = nullptr;
     vk::raii::CommandBuffer m_commandBuffer = nullptr;
+    vk::raii::Semaphore m_presentCompleteSemaphore = nullptr;
+    vk::raii::Semaphore m_renderFinishedSemaphore = nullptr;
+    vk::raii::Fence m_drawFence = nullptr;
 
     uint32_t m_queueIndex = 0;
 
@@ -252,4 +255,7 @@ private:
         vk::PipelineStageFlags2 srcStageMask,
         vk::PipelineStageFlags2 dstStageMask
     );
+
+    void DrawFrame();
+    void CreateSyncObjects();
 };

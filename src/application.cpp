@@ -74,6 +74,7 @@ void Application::InitVulkan() {
     CreateGraphicsPipeline();
     CreateCommandPool();
     CreateCommandBuffer();
+    CreateSyncObjects();
 }
 
 /**
@@ -85,7 +86,11 @@ void Application::InitVulkan() {
 void Application::MainLoop() {
     while (!glfwWindowShouldClose(m_window)) {
         glfwPollEvents();
+        DrawFrame();
     }
+
+    // Wait for the logical device to finish its operations before terminating
+    m_device.waitIdle();
 }
 
 /**
@@ -451,12 +456,12 @@ void Application::CreateLogicalDevice() {
         /* Physical device features */
         {
 #ifdef POLYGON_FILL
-        // Empty
+            // Empty
 #else
-        // Anything other than vk::PolygonMode::eFill must enable the fillModeNonSolid feature
-        .features = {
-            .fillModeNonSolid = true
-        }
+            // Anything other than vk::PolygonMode::eFill must enable the fillModeNonSolid feature
+            .features = {
+                .fillModeNonSolid = true
+            }
 #endif
         },
         /* Vulkan 1.1 features */
@@ -465,6 +470,7 @@ void Application::CreateLogicalDevice() {
         },
         /* Vulkan 1.3 feature */
         {
+            .synchronization2 = true,
             .dynamicRendering = true
         },
         /* Extended dynamic state features */
@@ -482,7 +488,7 @@ void Application::CreateLogicalDevice() {
     };
 
     m_device = vk::raii::Device(m_physicalDevice, deviceCreateInfo);
-    m_graphicsQueue = vk::raii::Queue(m_device, m_queueIndex, 0);
+    m_queue = vk::raii::Queue(m_device, m_queueIndex, 0);
 }
 
 /**
@@ -1085,4 +1091,83 @@ void Application::TransitionImageLayout(
         .pImageMemoryBarriers = &barrier};
     
     m_commandBuffer.pipelineBarrier2(dependency_info);
+}
+
+/**
+ * @brief Draw a frame.
+ * 
+ * Called from the main loop.
+ * 
+ * A Vulkan sephamore is a synchronization object used to order GPU queue operations (GPU -> GPU).
+ * 
+ * A Vulkan fence is a synchronization object used to order CPU queue operations (CPU -> CPU).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html
+ */
+void Application::DrawFrame() {
+    /*  Wait until the previous frame is finished */
+    auto fenceResult = m_device.waitForFences(
+        *m_drawFence,
+        vk::True,
+        UINT64_MAX // Timeout
+    );
+    if (fenceResult != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to wait for fence!");
+    }
+    m_device.resetFences(*m_drawFence);
+
+    auto [result, imageIndex] = m_swapChain.acquireNextImage(
+        UINT64_MAX, // Timeout
+        *m_presentCompleteSemaphore,
+        nullptr
+    );
+
+    RecordCommandBuffer(imageIndex);
+
+    vk::PipelineStageFlags waitDestinationStageMask(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    );
+    const vk::SubmitInfo submitInfo{
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &*m_presentCompleteSemaphore,
+        .pWaitDstStageMask = &waitDestinationStageMask,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &*m_commandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = &*m_renderFinishedSemaphore
+    };
+
+    m_queue.submit(submitInfo, *m_drawFence);
+
+    const vk::PresentInfoKHR presentInfoKHR{
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &*m_renderFinishedSemaphore,
+        .swapchainCount = 1,
+        .pSwapchains = &*m_swapChain,
+        .pImageIndices = &imageIndex
+    };
+
+    result = m_queue.presentKHR(presentInfoKHR);
+}
+
+/**
+ * @brief Draw a frame.
+ * 
+ * Called from the main loop.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html
+ */
+void Application::CreateSyncObjects() {
+    m_presentCompleteSemaphore = vk::raii::Semaphore(
+        m_device,
+        vk::SemaphoreCreateInfo()
+    );
+    m_renderFinishedSemaphore = vk::raii::Semaphore(
+        m_device,
+        vk::SemaphoreCreateInfo()
+    );
+    m_drawFence = vk::raii::Fence(
+        m_device,
+        {.flags = vk::FenceCreateFlagBits::eSignaled}
+    );
 }
