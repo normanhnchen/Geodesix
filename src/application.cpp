@@ -913,4 +913,10 @@ void Application::CreateGraphicsPipeline() {
         graphicsRenderingCreateInfo,
         pipelineRenderingCreateInfo
     };
+
+    m_graphicsPipeline = vk::raii::Pipeline(
+        m_device,
+        nullptr,
+        pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
+    );
 }
