@@ -18,6 +18,8 @@ add_executable(Geodesix
     src/main.cpp
     src/application.cpp
     src/window.cpp
+    src/vulkan_context.cpp
+    src/swap_chain.cpp
 )
 
 target_link_libraries(Geodesix PRIVATE

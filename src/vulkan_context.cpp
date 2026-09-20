@@ -3,6 +3,10 @@
 #include "vulkan_context.hpp"
 
 
+VulkanContext::VulkanContext(Window& window)
+    : m_window(window) {
+}
+
 void VulkanContext::Init() {
     CreateInstance();
     SetupDebugMessenger();
@@ -15,6 +19,18 @@ void VulkanContext::Init() {
  */
 void VulkanContext::WaitForDevice() {
     m_device.waitIdle();
+}
+
+const vk::raii::PhysicalDevice& VulkanContext::GetPhysicalDevice() const {
+    return m_physicalDevice;
+}
+
+const vk::raii::Device& VulkanContext::GetDevice() const {
+    return m_device;
+}
+
+const vk::raii::SurfaceKHR& VulkanContext::GetSurface() const {
+    return m_surface;
 }
 
 /**

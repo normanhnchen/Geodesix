@@ -44,8 +44,12 @@ public:
 
     void WaitForDevice();
 
+    const vk::raii::PhysicalDevice& GetPhysicalDevice() const;
+    const vk::raii::Device& GetDevice() const;
+    const vk::raii::SurfaceKHR& GetSurface() const;
+
 private:
-    Window m_window;
+    Window& m_window;
     vk::raii::Context m_context;
     vk::raii::Instance m_instance = nullptr;
     vk::raii::DebugUtilsMessengerEXT m_debugMessenger = nullptr;

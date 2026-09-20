@@ -22,6 +22,7 @@ import vulkan_hpp;
 
 #include "window.hpp"
 #include "vulkan_context.hpp"
+#include "swap_chain.hpp"
 
 
 /* ==== Debug Macros ==== */
@@ -143,12 +144,8 @@ public:
 private:
     Window m_window {WIDTH, HEIGHT, "Geodesix"};
     VulkanContext m_vulkanContext {m_window};
+    SwapChain m_swapChain;
 
-    vk::raii::SwapchainKHR m_swapChain = nullptr;
-    std::vector<vk::Image> m_swapChainImages;
-    vk::SurfaceFormatKHR m_swapChainSurfaceFormat;
-    vk::Extent2D m_swapChainExtent;
-    std::vector<vk::raii::ImageView> m_swapChainImageViews;
     vk::raii::PipelineLayout m_pipelineLayout = nullptr;
     vk::raii::Pipeline m_graphicsPipeline = nullptr;
     vk::raii::CommandPool m_commandPool = nullptr;
@@ -162,14 +159,6 @@ private:
     void InitVulkan();
     void MainLoop();
     void Cleanup();
-
-    void CreateSwapChain();
-    vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& availableFormats);
-    vk::PresentModeKHR ChooseSwapPresentMode(std::vector<vk::PresentModeKHR> const& availablePresentModes);
-    vk::Extent2D ChooseSwapExtent(vk::SurfaceCapabilitiesKHR const &capabilities);
-    uint32_t ChooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR const &surfaceCapabilities);
-
-    void CreateImageViews();
 
     /**
      * @brief Reads the bytes of a specified file.

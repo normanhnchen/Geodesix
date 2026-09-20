@@ -6,10 +6,8 @@
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
  */
-Window::Window(int width, int height, const char* title) {
-    m_width = width;
-    m_height = height;
-    m_title = title;
+Window::Window(int width, int height, const char* title)
+    : m_width(width), m_height(height), m_title(title) {
 }
 
 /**
