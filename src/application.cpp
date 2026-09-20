@@ -962,10 +962,10 @@ void Application::CreateCommandBuffer() {
          *      buffers.
          */
         .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1
+        .commandBufferCount = MAX_FRAMES_IN_FLIGHT
     };
 
-    m_commandBuffer = std::move(vk::raii::CommandBuffers(m_device, allocInfo).front());
+    m_commandBuffers = vk::raii::CommandBuffers(m_device, allocInfo);
 }
 
 /**
@@ -974,7 +974,8 @@ void Application::CreateCommandBuffer() {
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
  */
 void Application::RecordCommandBuffer(uint32_t imageIndex) {
-    m_commandBuffer.begin({});
+    auto &commandBuffer = m_commandBuffers[m_frameIndex];
+    commandBuffer.begin({});
     
     // Swapchain image: undefined -> vk::ImageLayout::eColorAttachmentOptimal
     TransitionImageLayout(
@@ -1012,12 +1013,12 @@ void Application::RecordCommandBuffer(uint32_t imageIndex) {
         .pColorAttachments = &attachmentInfo
     };
 
-    m_commandBuffer.beginRendering(renderingInfo);
-    m_commandBuffer.bindPipeline(
+    commandBuffer.beginRendering(renderingInfo);
+    commandBuffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
         *m_graphicsPipeline
     );
-    m_commandBuffer.setViewport(
+    commandBuffer.setViewport(
         0,
         vk::Viewport(
             0.0f,
@@ -1028,7 +1029,7 @@ void Application::RecordCommandBuffer(uint32_t imageIndex) {
             1.0f
         )
     );
-    m_commandBuffer.setScissor(
+    commandBuffer.setScissor(
         0,
         vk::Rect2D(
             vk::Offset2D(0, 0),
@@ -1036,9 +1037,9 @@ void Application::RecordCommandBuffer(uint32_t imageIndex) {
         )
     );
 
-    m_commandBuffer.draw(3, 1, 0, 0);
+    commandBuffer.draw(3, 1, 0, 0);
 
-    m_commandBuffer.endRendering();
+    commandBuffer.endRendering();
 
     // Swapchain image: vk::ImageLayout::eColorAttachmentOptimal -> vk::ImageLayout::ePresentSrcKHR
     TransitionImageLayout (
@@ -1051,7 +1052,7 @@ void Application::RecordCommandBuffer(uint32_t imageIndex) {
         vk::PipelineStageFlagBits2::eBottomOfPipe // dstStage
     );
 
-    m_commandBuffer.end();
+    commandBuffer.end();
 }
 
 /**
@@ -1090,7 +1091,7 @@ void Application::TransitionImageLayout(
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &barrier};
     
-    m_commandBuffer.pipelineBarrier2(dependency_info);
+    m_commandBuffers[m_frameIndex].pipelineBarrier2(dependency_info);
 }
 
 /**
@@ -1107,18 +1108,18 @@ void Application::TransitionImageLayout(
 void Application::DrawFrame() {
     /*  Wait until the previous frame is finished */
     auto fenceResult = m_device.waitForFences(
-        *m_drawFence,
+        *m_inFlightFences[m_frameIndex],
         vk::True,
         UINT64_MAX // Timeout
     );
     if (fenceResult != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to wait for fence!");
     }
-    m_device.resetFences(*m_drawFence);
+    m_device.resetFences(*m_inFlightFences[m_frameIndex]);
 
     auto [result, imageIndex] = m_swapChain.acquireNextImage(
         UINT64_MAX, // Timeout
-        *m_presentCompleteSemaphore,
+        *m_presentCompleteSemaphores[m_frameIndex],
         nullptr
     );
 
@@ -1129,45 +1130,53 @@ void Application::DrawFrame() {
     );
     const vk::SubmitInfo submitInfo{
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*m_presentCompleteSemaphore,
+        .pWaitSemaphores = &*m_presentCompleteSemaphores[m_frameIndex],
         .pWaitDstStageMask = &waitDestinationStageMask,
         .commandBufferCount = 1,
-        .pCommandBuffers = &*m_commandBuffer,
+        .pCommandBuffers = &*m_commandBuffers[m_frameIndex],
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &*m_renderFinishedSemaphore
+        .pSignalSemaphores = &*m_renderFinishedSemaphores[imageIndex]
     };
 
-    m_queue.submit(submitInfo, *m_drawFence);
+    m_queue.submit(submitInfo, *m_inFlightFences[m_frameIndex]);
 
     const vk::PresentInfoKHR presentInfoKHR{
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*m_renderFinishedSemaphore,
+        .pWaitSemaphores = &*m_renderFinishedSemaphores[imageIndex],
         .swapchainCount = 1,
         .pSwapchains = &*m_swapChain,
         .pImageIndices = &imageIndex
     };
 
     result = m_queue.presentKHR(presentInfoKHR);
+
+    // Advance the frame counter
+    m_frameIndex = (m_frameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 /**
- * @brief Draw a frame.
- * 
- * Called from the main loop.
+ * @brief Create Vulkan synchronization objects.
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html
  */
 void Application::CreateSyncObjects() {
-    m_presentCompleteSemaphore = vk::raii::Semaphore(
-        m_device,
-        vk::SemaphoreCreateInfo()
-    );
-    m_renderFinishedSemaphore = vk::raii::Semaphore(
-        m_device,
-        vk::SemaphoreCreateInfo()
-    );
-    m_drawFence = vk::raii::Fence(
-        m_device,
-        {.flags = vk::FenceCreateFlagBits::eSignaled}
-    );
+    for (size_t i = 0; i < m_swapChainImages.size(); i++) {
+        m_renderFinishedSemaphores.emplace_back(
+            m_device,
+            vk::SemaphoreCreateInfo()
+        );
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        m_presentCompleteSemaphores.emplace_back(
+            m_device,
+            vk::SemaphoreCreateInfo()
+        );
+        m_inFlightFences.emplace_back(
+            m_device,
+            vk::FenceCreateInfo{
+                .flags = vk::FenceCreateFlagBits::eSignaled
+            }
+        );
+    }
 }

@@ -117,6 +117,8 @@ import vulkan_hpp;
 constexpr uint32_t WIDTH  = 800;
 constexpr uint32_t HEIGHT = 600;
 
+constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+
 const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -159,12 +161,13 @@ private:
     vk::raii::PipelineLayout m_pipelineLayout = nullptr;
     vk::raii::Pipeline m_graphicsPipeline = nullptr;
     vk::raii::CommandPool m_commandPool = nullptr;
-    vk::raii::CommandBuffer m_commandBuffer = nullptr;
-    vk::raii::Semaphore m_presentCompleteSemaphore = nullptr;
-    vk::raii::Semaphore m_renderFinishedSemaphore = nullptr;
-    vk::raii::Fence m_drawFence = nullptr;
+    std::vector<vk::raii::CommandBuffer> m_commandBuffers;
+    std::vector<vk::raii::Semaphore> m_presentCompleteSemaphores;
+    std::vector<vk::raii::Semaphore> m_renderFinishedSemaphores;
+    std::vector<vk::raii::Fence> m_inFlightFences;
 
     uint32_t m_queueIndex = 0;
+    uint32_t m_frameIndex = 0;
 
     std::vector<const char*> requiredDeviceExtension = {
         vk::KHRSwapchainExtensionName
