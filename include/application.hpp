@@ -23,114 +23,11 @@ import vulkan_hpp;
 #include "window.hpp"
 #include "vulkan_context.hpp"
 #include "swap_chain.hpp"
+#include "renderer.hpp"
 
-
-/* ==== Debug Macros ==== */
-
-/**
- * ---- Present Modes ----
- * These macros are used in Application::ChooseSwapPresentMode
- */
-// #define DEBUG_PRESENT_IMMEDIATE
-// #define DEBUG_PRESENT_FIFO
-// #define DEBUG_PRESENT_FIFO_RELAXED
-// #define DEBUG_PRESENT_MAILBOX
-
-/**
- * The macro below defines the minimum image count strategy used in
- * Application::ChooseSwapMinImageCount. If the macro is defined,  we use the tutorial's
- * explanatory minimum count minImageCount + 1. Otherwise, we use the tutorial's shipped version
- * std::max(3u, surfaceCapabilities.minImageCount).
- */
-// #define DEBUG_MIN_IMAGE_COUNT_LEGACY
-
-/**
- * ---- Topology Modes ---
- * These macros are used in Appication::CreateGraphicsPipeline for the inputAssembly struct.
- * 
- * They represent how the geometry will be drawn from vertices sent to the GPU and the primitive.
- * 
- * NOTE: only one of the macros should be defined or else it might lead to unexpected behavior!
- * 
- * NOTE: for any mode other than eFill, a physical device feature must be enabled (see
- * Application::CreateLogicalDevice -> featureChain struct)
- */
-
-/** 
- * Draw points from vertices.
- * 
- * vk::PrimitiveTopology::ePointList
- */
-// #define TOPOLOGY_POINT_LIST
-/** 
- * Draw lines between every two vertices (without reusing vertices).
- * 
- * vk::PrimitiveTopology::eLineList
- */
-// #define TOPOLOGY_LINE_LIST
-/** 
- * Draw lines where the end vertex of every line is used as the start vertex for the next line.
- * 
- * vk::PrimitiveTopology::eLineStrip
- */
-// #define TOPOLOGY_LINE_STRIP
-/** 
- * Draw triangles from every three vertices (without reusing vertices).
- * 
- * vk::PrimitiveTopology::eTriangleList
- */
-// #define TOPOLOGY_TRIANGLE_LIST
-/** 
- * Draw triangles where every second and third vertex of every triangle are reused for the next
- * triangle's first two vertices.
- * 
- * vk::PrimitiveTopology::eTriangleStrip
- */
-#define TOPOLOGY_TRIANGLE_STRIP
-
-/**
- * ---- Polygon Mode ----
- * 
- * These macros are used in Application::CreateGraphicsPipeline for the rasterizer struct.
- * 
- * NOTE: only one of the macros should be defined or else it might lead to unexpected behavior!
- */
-
-/**
- * Fill the area of polygons.
- * 
- * vk::PolygonMode::eFill
- */
-#define POLYGON_FILL
-/**
- * Draw polygon edges as lines.
- * 
- * vk::PolygonMode::eLine
- */
-// #define POLYGON_LINE
-/**
- * Draw polygon vertices as points.
- * 
- * vk::PolygonMode::ePoint
- */
-// #define POLYGON_POINT
 
 constexpr uint32_t WIDTH  = 800;
 constexpr uint32_t HEIGHT = 600;
-
-constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-
-const std::filesystem::path SHADER_SPIRV_DIR = CMAKE_SHADER_SPIRV_DIR;
-const std::string SHADER_MAIN_VERT_PATH = std::string(SHADER_SPIRV_DIR / "main.vert.spv");
-const std::string SHADER_MAIN_FRAG_PATH = std::string(SHADER_SPIRV_DIR / "main.frag.spv");
-
-/**
- * The entry point is the function where the shader starts executing. In GLSL, there can only be
- * one entry point per file (that being void main()). In other languages like Slang, there can be
- * multiple entry points where each could represent a shader stage. For GLSL, we default to "main"
- * for all shader modules.
- */
-constexpr const char* SHADER_ENTRY_POINT = "main";
 
 /**
  * The main application, including a Vulkan & GLFW backend.
@@ -144,63 +41,10 @@ public:
 private:
     Window m_window {WIDTH, HEIGHT, "Geodesix"};
     VulkanContext m_vulkanContext {m_window};
-    SwapChain m_swapChain;
-
-    vk::raii::PipelineLayout m_pipelineLayout = nullptr;
-    vk::raii::Pipeline m_graphicsPipeline = nullptr;
-    vk::raii::CommandPool m_commandPool = nullptr;
-    std::vector<vk::raii::CommandBuffer> m_commandBuffers;
-    std::vector<vk::raii::Semaphore> m_presentCompleteSemaphores;
-    std::vector<vk::raii::Semaphore> m_renderFinishedSemaphores;
-    std::vector<vk::raii::Fence> m_inFlightFences;
-
-    uint32_t m_frameIndex = 0;
+    SwapChain m_swapChain {m_window, m_vulkanContext};
+    Renderer m_renderer {m_window, m_vulkanContext, m_swapChain};
 
     void InitVulkan();
     void MainLoop();
     void Cleanup();
-
-    /**
-     * @brief Reads the bytes of a specified file.
-     * 
-     * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/01_Shader_modules.html
-     */
-    static std::vector<char> ReadFile(const std::string &filePath) {
-        // Open the file at the end (ate) in binary mode
-		std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-		if (!file.is_open()) {
-			throw std::runtime_error("Failed to open file!");
-		}
-        // Get the exact number of bytes the file has and allocate it to a buffer
-		std::vector<char> buffer(file.tellg());
-        // Reset the read cursor to beginning
-		file.seekg(0, std::ios::beg);
-        // Read the raw bytes
-		file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-		file.close();
-		return buffer;
-	}
-
-    [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;
-
-    void CreateGraphicsPipeline();
-
-    void CreateCommandPool();
-    void CreateCommandBuffer();
-    void RecordCommandBuffer(uint32_t imageIndex);
-    void TransitionImageLayout(
-        uint32_t imageIndex,
-        vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout,
-        vk::AccessFlags2 srcAccessMask,
-        vk::AccessFlags2 dstAccessMask,
-        vk::PipelineStageFlags2 srcStageMask,
-        vk::PipelineStageFlags2 dstStageMask
-    );
-
-    void DrawFrame();
-    void CreateSyncObjects();
-
-    void RecreateSwapChain();
-    void CleanupSwapChain();
 };

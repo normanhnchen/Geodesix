@@ -10,26 +10,101 @@ void SwapChain::Init() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
     const vk::raii::SurfaceKHR& surface = m_vulkanContext.GetSurface();
 
-    CreateSwapChain(physicalDevice, device, surface);
-    CreateImageViews(device);
+    CreateSwapChain();
+    CreateImageViews();
 }
 
+/**
+ * @brief Clean up swap chain objects.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
+ */
+void SwapChain::Cleanup() {
+    m_swapChainImageViews.clear();
+    m_swapChain = nullptr;
+}
+
+/**
+ * @brief Recreate the Vulkan swap chain and its corresponding objects.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
+ */
+void SwapChain::Recreate() {
+    // Pause until the window is unminimized
+    m_window.MinimizedLoop();
+    if (m_window.ShouldClose()) {
+        return;
+    }
+    
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    device.waitIdle();
+
+    Cleanup();
+
+    CreateSwapChain();
+    CreateImageViews();
+}
+
+std::optional<uint32_t> SwapChain::AcquireNextImageIndex(
+    const vk::raii::Semaphore& presentCompleteSemaphore
+) {
+    auto [result, imageIndex] = m_swapChain.acquireNextImage(
+        UINT64_MAX, // Timeout
+        *presentCompleteSemaphore,
+        nullptr
+    );
+
+    if (result == vk::Result::eErrorOutOfDateKHR) {
+        /* The swap chain is incompatible with the surface and can no longer be used to render */
+        Recreate();
+        // The caller skips this frame
+        return std::nullopt;
+    }
+    if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+        /* The surface properties don't match anymore */
+        assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
+        throw std::runtime_error("Failed to get a new swap chain image!");
+    }
+
+    return imageIndex;
+}
+
+const vk::raii::SwapchainKHR& SwapChain::GetNative() const {
+    return m_swapChain;
+}
+
+std::vector<vk::Image> SwapChain::GetImages() {
+    return m_swapChainImages;
+}
+
+vk::Extent2D SwapChain::GetExtent() {
+    return m_swapChainExtent;
+}
+
+const std::vector<vk::raii::ImageView>& SwapChain::GetImageViews() const {
+    return m_swapChainImageViews;
+}
+
+vk::SurfaceFormatKHR SwapChain::GetSurfaceFormat() {
+    return m_swapChainSurfaceFormat;
+}
 
 /**
  * @brief Creates the Vulkan swap chain.
  * 
  * The Vulkan swap chain is a queue (most of the time) that swaps rendered images in its queue to
- * the window surface (see SwapChain::CreateSurface). This way, only complete images are
+ * the window surface (see VulkanContext::CreateSurface). This way, only complete images are
  * displayed and rendering can occur before the image refreshes to prevent screen tearing (in the
  * commonly-used swap chain modes).
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
  */
-void SwapChain::CreateSwapChain(
-    const vk::raii::PhysicalDevice& physicalDevice,
-    const vk::raii::Device& device,
-    const vk::raii::SurfaceKHR& surface
-) {
+void SwapChain::CreateSwapChain() {
+    const vk::raii::PhysicalDevice& physicalDevice = m_vulkanContext.GetPhysicalDevice();
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    const vk::raii::SurfaceKHR& surface = m_vulkanContext.GetSurface();
+
     vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface);
     m_swapChainExtent = ChooseSwapExtent(surfaceCapabilities);
     uint32_t minImageCount = ChooseSwapMinImageCount(surfaceCapabilities);
@@ -66,7 +141,7 @@ void SwapChain::CreateSwapChain(
 }
 
 /**
- * @brief Chooses a window surface (see SwapChain::CreateSurface) format for the swap chain,
+ * @brief Chooses a window surface (see VulkanContext::CreateSurface) format for the swap chain,
  * preferred by if color formatting is more accurate.
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
@@ -102,7 +177,7 @@ vk::SurfaceFormatKHR SwapChain::ChooseSwapSurfaceFormat(
  * @brief Chooses a present mode for the swap chain.
  * 
  * The present mode for the window surface is used when displaying an image from the Vulkan queue (
- * see SwapChain::CreateLogicalDevice).
+ * see VulkanContext::CreateLogicalDevice).
  * 
  * The function chooses vk::PresentModeKHR::eMailbox (triple buffering) by default if available.
  * Otherwise, it uses vk::PresentModeKHR::eFifo (double buffering) which is guaranteed to be
@@ -168,7 +243,7 @@ vk::PresentModeKHR SwapChain::ChooseSwapPresentMode(
 
 /**
  * @brief Chooses a Vulkan window extent (screen size in pixels) to draw to the window surface (see
- * SwapChain::CreateSurface).
+ * VulkanContext::CreateSurface).
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
  */
@@ -233,7 +308,9 @@ uint32_t SwapChain::ChooseSwapMinImageCount(
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/02_Image_views.html
  */
-void SwapChain::CreateImageViews(const vk::raii::Device& device) {
+void SwapChain::CreateImageViews() {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
     // Make sure there is atleast an ImageView
     assert(m_swapChainImageViews.empty());
 

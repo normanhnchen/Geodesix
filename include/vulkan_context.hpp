@@ -31,10 +31,36 @@ import vulkan_hpp;
 #define DEBUG_VALIDATION_LAYERS
 // #define DEBUG_PRINT_EXTENSIONS
 
+/**
+ * ---- Polygon Mode ----
+ * 
+ * These macros are used in Renderer::CreateGraphicsPipeline for the rasterizer struct.
+ * 
+ * NOTE: only one of the macros should be defined or else it might lead to unexpected behavior!
+ */
+
+/**
+ * Fill the area of polygons.
+ * 
+ * vk::PolygonMode::eFill
+ */
+#define POLYGON_FILL
+/**
+ * Draw polygon edges as lines.
+ * 
+ * vk::PolygonMode::eLine
+ */
+// #define POLYGON_LINE
+/**
+ * Draw polygon vertices as points.
+ * 
+ * vk::PolygonMode::ePoint
+ */
+// #define POLYGON_POINT
+
 const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
-
 
 class VulkanContext {
 public:
@@ -47,6 +73,8 @@ public:
     const vk::raii::PhysicalDevice& GetPhysicalDevice() const;
     const vk::raii::Device& GetDevice() const;
     const vk::raii::SurfaceKHR& GetSurface() const;
+    const vk::raii::Queue& GetQueue() const;
+    uint32_t GetQueueIndex();
 
 private:
     Window& m_window;

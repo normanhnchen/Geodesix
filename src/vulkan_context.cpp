@@ -12,6 +12,7 @@ void VulkanContext::Init() {
     SetupDebugMessenger();
     CreateSurface();
     SelectPhysicalDevice();
+    CreateLogicalDevice();
 }
 
 /**
@@ -31,6 +32,14 @@ const vk::raii::Device& VulkanContext::GetDevice() const {
 
 const vk::raii::SurfaceKHR& VulkanContext::GetSurface() const {
     return m_surface;
+}
+
+const vk::raii::Queue& VulkanContext::GetQueue() const {
+    return m_queue;
+}
+
+uint32_t VulkanContext::GetQueueIndex() {
+    return m_queueIndex;
 }
 
 /**
