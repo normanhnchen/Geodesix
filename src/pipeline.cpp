@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
-#include <fstream>
 
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
@@ -13,6 +12,7 @@ import vulkan_hpp;
 #endif
 
 #include "pipeline.hpp"
+#include "vk_util.hpp"
 
 
 /**
@@ -93,8 +93,8 @@ void Pipeline::Create() {
 
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
 
-    auto shaderCodeMainVert = ReadFile(SHADER_MAIN_VERT_PATH);
-    auto shaderCodeMainFrag = ReadFile(SHADER_MAIN_FRAG_PATH);
+    auto shaderCodeMainVert = vk_util::ReadFile(SHADER_MAIN_VERT_PATH);
+    auto shaderCodeMainFrag = vk_util::ReadFile(SHADER_MAIN_FRAG_PATH);
 
     vk::raii::ShaderModule shaderModuleMainVert = CreateShaderModule(shaderCodeMainVert);
     vk::raii::ShaderModule shaderModuleMainFrag = CreateShaderModule(shaderCodeMainFrag);
@@ -233,27 +233,6 @@ void Pipeline::Create() {
         nullptr,
         pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
     );
-}
-
-/**
- * @brief Reads the bytes of a specified file.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/01_Shader_modules.html
- */
-std::vector<char> Pipeline::ReadFile(const std::string &filePath) {
-    // Open the file at the end (ate) in binary mode
-    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file!");
-    }
-    // Get the exact number of bytes the file has and allocate it to a buffer
-    std::vector<char> buffer(file.tellg());
-    // Reset the read cursor to beginning
-    file.seekg(0, std::ios::beg);
-    // Read the raw bytes
-    file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-    file.close();
-    return buffer;
 }
 
 /**

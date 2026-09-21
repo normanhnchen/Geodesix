@@ -45,15 +45,4 @@ private:
 
     void CreateCommandPool();
     void CreateCommandBuffer();
-
-    void TransitionImageLayout(
-        uint32_t imageIndex,
-        uint32_t frameIndex,
-        vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout,
-        vk::AccessFlags2 srcAccessMask,
-        vk::AccessFlags2 dstAccessMask,
-        vk::PipelineStageFlags2 srcStageMask,
-        vk::PipelineStageFlags2 dstStageMask
-    );
 };

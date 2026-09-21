@@ -1,4 +1,5 @@
 #include "command_context.hpp"
+#include "vk_util.hpp"
 
 
 CommandContext::CommandContext(
@@ -33,7 +34,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     commandBuffer.begin({});
     
     // Swapchain image: undefined -> vk::ImageLayout::eColorAttachmentOptimal
-    TransitionImageLayout(
+    vk_util::TransitionImageLayout(
         imageIndex,
         frameIndex,
         vk::ImageLayout::eUndefined, // Old layout
@@ -41,7 +42,9 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
         {}, // srcAccessMask
         vk::AccessFlagBits2::eColorAttachmentWrite, // dstAccessMask
         vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput // dstStage
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput, // dstStage
+        m_swapChain,
+        *this
     );
 
     vk::ClearValue clearColor = vk::ClearColorValue(
@@ -98,7 +101,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     commandBuffer.endRendering();
 
     // Swapchain image: vk::ImageLayout::eColorAttachmentOptimal -> vk::ImageLayout::ePresentSrcKHR
-    TransitionImageLayout (
+    vk_util::TransitionImageLayout (
         imageIndex,
         frameIndex,
         vk::ImageLayout::eColorAttachmentOptimal, // Old layout
@@ -106,7 +109,9 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
         vk::AccessFlagBits2::eColorAttachmentWrite, // srcAccessMask
         {}, // dstAccessMask
         vk::PipelineStageFlagBits2::eColorAttachmentOutput, // srcStage
-        vk::PipelineStageFlagBits2::eBottomOfPipe // dstStage
+        vk::PipelineStageFlagBits2::eBottomOfPipe, // dstStage
+        m_swapChain,
+        *this
     );
 
     commandBuffer.end();
@@ -158,46 +163,4 @@ void CommandContext::CreateCommandBuffer() {
     };
 
     m_commandBuffers = vk::raii::CommandBuffers(device, allocInfo);
-}
-
-/**
- * @brief Transition a Vulkan image layout to and from being suitable for rendering.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
- */
-void CommandContext::TransitionImageLayout(
-    uint32_t imageIndex,
-    uint32_t frameIndex,
-    vk::ImageLayout oldLayout,
-    vk::ImageLayout newLayout,
-    vk::AccessFlags2 srcAccessMask,
-    vk::AccessFlags2 dstAccessMask,
-    vk::PipelineStageFlags2 srcStageMask,
-    vk::PipelineStageFlags2 dstStageMask
-) {
-    std::vector<vk::Image> swapChainImages = m_swapChain.GetImages();
-
-	vk::ImageMemoryBarrier2 barrier = {
-        .srcStageMask = srcStageMask,
-        .srcAccessMask = srcAccessMask,
-        .dstStageMask = dstStageMask,
-        .dstAccessMask = dstAccessMask,
-        .oldLayout = oldLayout,
-        .newLayout = newLayout,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = swapChainImages[imageIndex],
-        .subresourceRange = {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1}};
-    
-    vk::DependencyInfo dependency_info = {
-        .dependencyFlags = {},
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &barrier};
-    
-    m_commandBuffers[frameIndex].pipelineBarrier2(dependency_info);
 }

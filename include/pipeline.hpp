@@ -34,8 +34,6 @@ private:
 
     void Create();
 
-    static std::vector<char> ReadFile(const std::string &filePath);
-
     [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(
         const std::vector<char>& code
     ) const;
