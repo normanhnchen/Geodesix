@@ -18,9 +18,8 @@ import vulkan_hpp;
 #include "vulkan_context.hpp"
 #include "swap_chain.hpp"
 #include "pipeline.hpp"
+#include "sync_context.hpp"
 
-
-constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Renderer {
 public:
@@ -28,7 +27,8 @@ public:
         Window& window,
         VulkanContext& vulkanContext,
         SwapChain& swapChain,
-        Pipeline& pipeline
+        Pipeline& pipeline,
+        SyncContext& syncContext
     );
 
     void Init();
@@ -40,12 +40,10 @@ private:
     VulkanContext& m_vulkanContext;
     SwapChain& m_swapChain;
     Pipeline& m_pipeline;
+    SyncContext& m_syncContext;
 
     vk::raii::CommandPool m_commandPool = nullptr;
     std::vector<vk::raii::CommandBuffer> m_commandBuffers;
-    std::vector<vk::raii::Semaphore> m_presentCompleteSemaphores;
-    std::vector<vk::raii::Semaphore> m_renderFinishedSemaphores;
-    std::vector<vk::raii::Fence> m_inFlightFences;
 
     uint32_t m_frameIndex = 0;
 
@@ -62,6 +60,4 @@ private:
         vk::PipelineStageFlags2 srcStageMask,
         vk::PipelineStageFlags2 dstStageMask
     );
-
-    void CreateSyncObjects();
 };

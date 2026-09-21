@@ -22,6 +22,7 @@ add_executable(Geodesix
     src/swap_chain.cpp
     src/renderer.cpp
     src/pipeline.cpp
+    src/sync_context.cpp
 )
 
 target_link_libraries(Geodesix PRIVATE

@@ -5,19 +5,21 @@ Renderer::Renderer(
     Window& window,
     VulkanContext& vulkanContext,
     SwapChain& swapChain,
-    Pipeline& pipeline
+    Pipeline& pipeline,
+    SyncContext& syncContext
 )
     : m_window(window),
     m_vulkanContext(vulkanContext),
     m_swapChain(swapChain),
-    m_pipeline(pipeline) {
+    m_pipeline(pipeline),
+    m_syncContext(syncContext) {
 }
 
 void Renderer::Init() {
     m_pipeline.Init();
     CreateCommandPool();
     CreateCommandBuffer();
-    CreateSyncObjects();
+    m_syncContext.Init();
 }
 
 /**
@@ -38,20 +40,13 @@ void Renderer::DrawFrame() {
     std::vector<vk::Image> swapChainImages = m_swapChain.GetImages();
     vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
+    const std::vector<vk::raii::Semaphore>& presentCompleteSemaphores = m_syncContext.GetPresentCompleteSemaphore();
+    const std::vector<vk::raii::Semaphore>& renderFinishedSemaphores = m_syncContext.GetRenderFinishedSemaphores();
+    const std::vector<vk::raii::Fence>& inFlightFences = m_syncContext.GetInFlightFences();
 
-    /*  Wait until the previous frame is finished */
-    auto fenceResult = device.waitForFences(
-        *m_inFlightFences[m_frameIndex],
-        vk::True,
-        UINT64_MAX // Timeout
-    );
-    if (fenceResult != vk::Result::eSuccess) {
-        throw std::runtime_error("Failed to wait for fence!");
-    }
+    m_syncContext.WaitForFences(m_frameIndex);
 
-    auto imageIndexOpt = m_swapChain.AcquireNextImageIndex(
-        m_presentCompleteSemaphores[m_frameIndex]
-    );
+    auto imageIndexOpt = m_syncContext.AcquireNextImageIndex(m_frameIndex);
 
     if (imageIndexOpt == std::nullopt) {
         /* The swap chain is incompatible with the surface and can no longer be used to render */
@@ -60,9 +55,7 @@ void Renderer::DrawFrame() {
 
     uint32_t imageIndex = *imageIndexOpt;
 
-    // Prevent a deadlock by resetting the fence only when we know it will be submitting work later
-    // (we acquired the next image and it passed all of the error checks)
-    device.resetFences(*m_inFlightFences[m_frameIndex]);
+    m_syncContext.ResetFences(m_frameIndex);
 
     RecordCommandBuffer(imageIndex);
 
@@ -71,19 +64,19 @@ void Renderer::DrawFrame() {
     );
     const vk::SubmitInfo submitInfo{
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*m_presentCompleteSemaphores[m_frameIndex],
+        .pWaitSemaphores = &*presentCompleteSemaphores[m_frameIndex],
         .pWaitDstStageMask = &waitDestinationStageMask,
         .commandBufferCount = 1,
         .pCommandBuffers = &*m_commandBuffers[m_frameIndex],
         .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &*m_renderFinishedSemaphores[imageIndex]
+        .pSignalSemaphores = &*renderFinishedSemaphores[imageIndex]
     };
 
-    queue.submit(submitInfo, *m_inFlightFences[m_frameIndex]);
+    queue.submit(submitInfo, *inFlightFences[m_frameIndex]);
 
     const vk::PresentInfoKHR presentInfoKHR{
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*m_renderFinishedSemaphores[imageIndex],
+        .pWaitSemaphores = &*renderFinishedSemaphores[imageIndex],
         .swapchainCount = 1,
         .pSwapchains = &*swapChain,
         .pImageIndices = &imageIndex
@@ -284,34 +277,4 @@ void Renderer::TransitionImageLayout(
         .pImageMemoryBarriers = &barrier};
     
     m_commandBuffers[m_frameIndex].pipelineBarrier2(dependency_info);
-}
-
-/**
- * @brief Create Vulkan synchronization objects.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html
- */
-void Renderer::CreateSyncObjects() {
-    std::vector<vk::Image> swapChainImages = m_swapChain.GetImages();
-    const vk::raii::Device& device = m_vulkanContext.GetDevice();
-    
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-        m_renderFinishedSemaphores.emplace_back(
-            device,
-            vk::SemaphoreCreateInfo()
-        );
-    }
-
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        m_presentCompleteSemaphores.emplace_back(
-            device,
-            vk::SemaphoreCreateInfo()
-        );
-        m_inFlightFences.emplace_back(
-            device,
-            vk::FenceCreateInfo{
-                .flags = vk::FenceCreateFlagBits::eSignaled
-            }
-        );
-    }
 }
