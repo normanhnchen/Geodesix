@@ -18,6 +18,7 @@ import vulkan_hpp;
 #include "vulkan_context.hpp"
 #include "swap_chain.hpp"
 #include "pipeline.hpp"
+#include "command_context.hpp"
 #include "sync_context.hpp"
 
 
@@ -28,6 +29,7 @@ public:
         VulkanContext& vulkanContext,
         SwapChain& swapChain,
         Pipeline& pipeline,
+        CommandContext& commandContext,
         SyncContext& syncContext
     );
 
@@ -40,24 +42,8 @@ private:
     VulkanContext& m_vulkanContext;
     SwapChain& m_swapChain;
     Pipeline& m_pipeline;
+    CommandContext& m_commandContext;
     SyncContext& m_syncContext;
 
-    vk::raii::CommandPool m_commandPool = nullptr;
-    std::vector<vk::raii::CommandBuffer> m_commandBuffers;
-
     uint32_t m_frameIndex = 0;
-
-    void CreateGraphicsPipeline();
-    void CreateCommandPool();
-    void CreateCommandBuffer();
-    void RecordCommandBuffer(uint32_t imageIndex);
-    void TransitionImageLayout(
-        uint32_t imageIndex,
-        vk::ImageLayout oldLayout,
-        vk::ImageLayout newLayout,
-        vk::AccessFlags2 srcAccessMask,
-        vk::AccessFlags2 dstAccessMask,
-        vk::PipelineStageFlags2 srcStageMask,
-        vk::PipelineStageFlags2 dstStageMask
-    );
 };

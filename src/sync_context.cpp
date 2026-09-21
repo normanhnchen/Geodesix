@@ -38,7 +38,7 @@ void SyncContext::CreateObjects() {
         );
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < maxFramesInFlight; i++) {
         m_presentCompleteSemaphores.emplace_back(
             device,
             vk::SemaphoreCreateInfo()

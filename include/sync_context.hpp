@@ -5,8 +5,6 @@
 #include "swap_chain.hpp"
 
 
-constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-
 class SyncContext {
 public:
     SyncContext(VulkanContext& vulkanContext, SwapChain& swapChain);
@@ -23,6 +21,8 @@ public:
     const std::vector<vk::raii::Semaphore>& GetPresentCompleteSemaphore() const;
     const std::vector<vk::raii::Semaphore>& GetRenderFinishedSemaphores() const;
     const std::vector<vk::raii::Fence>& GetInFlightFences() const;
+
+    uint32_t maxFramesInFlight = 2;
 
 private:
     VulkanContext& m_vulkanContext;

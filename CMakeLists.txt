@@ -23,6 +23,7 @@ add_executable(Geodesix
     src/renderer.cpp
     src/pipeline.cpp
     src/sync_context.cpp
+    src/command_context.cpp
 )
 
 target_link_libraries(Geodesix PRIVATE
