@@ -74,6 +74,5 @@ void Application::MainLoop() {
  */
 void Application::Cleanup() {
     m_swapChain.Cleanup();
-
     m_window.Cleanup();
 }

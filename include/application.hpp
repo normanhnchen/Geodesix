@@ -42,7 +42,8 @@ private:
     Window m_window {WIDTH, HEIGHT, "Geodesix"};
     VulkanContext m_vulkanContext {m_window};
     SwapChain m_swapChain {m_window, m_vulkanContext};
-    Renderer m_renderer {m_window, m_vulkanContext, m_swapChain};
+    Pipeline m_pipeline {m_vulkanContext, m_swapChain};
+    Renderer m_renderer {m_window, m_vulkanContext, m_swapChain, m_pipeline};
 
     void InitVulkan();
     void MainLoop();

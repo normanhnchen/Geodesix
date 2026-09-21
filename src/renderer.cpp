@@ -4,13 +4,17 @@
 Renderer::Renderer(
     Window& window,
     VulkanContext& vulkanContext,
-    SwapChain& swapChain
+    SwapChain& swapChain,
+    Pipeline& pipeline
 )
-    : m_window(window), m_vulkanContext(vulkanContext), m_swapChain(swapChain) {
+    : m_window(window),
+    m_vulkanContext(vulkanContext),
+    m_swapChain(swapChain),
+    m_pipeline(pipeline) {
 }
 
 void Renderer::Init() {
-    CreateGraphicsPipeline();
+    m_pipeline.Init();
     CreateCommandPool();
     CreateCommandBuffer();
     CreateSyncObjects();
@@ -106,198 +110,6 @@ void Renderer::DrawFrame() {
 }
 
 /**
- * @brief Reads the bytes of a specified file.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/01_Shader_modules.html
- */
-std::vector<char> Renderer::ReadFile(const std::string &filePath) {
-    // Open the file at the end (ate) in binary mode
-    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file!");
-    }
-    // Get the exact number of bytes the file has and allocate it to a buffer
-    std::vector<char> buffer(file.tellg());
-    // Reset the read cursor to beginning
-    file.seekg(0, std::ios::beg);
-    // Read the raw bytes
-    file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-    file.close();
-    return buffer;
-}
-
-/**
- * @brief Create a Vulkan shader module from code (in bytes).
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/01_Shader_modules.html
- */
-[[nodiscard]] vk::raii::ShaderModule Renderer::CreateShaderModule(
-    const std::vector<char>& code
-) const {
-    const vk::raii::Device& device = m_vulkanContext.GetDevice();
-
-    vk::ShaderModuleCreateInfo createInfo{
-        .codeSize = code.size() * sizeof(char),
-        .pCode = reinterpret_cast<const uint32_t *>(code.data())
-    };
-    vk::raii::ShaderModule shaderModule{device, createInfo};
-
-    return shaderModule;
-}
-
-/**
- * @brief Create the graphics pipeline for rendering.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/00_Introduction.html
- */
-void Renderer::CreateGraphicsPipeline() {
-    vk::SurfaceFormatKHR swapChainSurfaceFormat = m_swapChain.GetSurfaceFormat();
-
-    const vk::raii::Device& device = m_vulkanContext.GetDevice();
-
-    auto shaderCodeMainVert = ReadFile(SHADER_MAIN_VERT_PATH);
-    auto shaderCodeMainFrag = ReadFile(SHADER_MAIN_FRAG_PATH);
-
-    vk::raii::ShaderModule shaderModuleMainVert = CreateShaderModule(shaderCodeMainVert);
-    vk::raii::ShaderModule shaderModuleMainFrag = CreateShaderModule(shaderCodeMainFrag);
-
-    vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
-        .stage = vk::ShaderStageFlagBits::eVertex,
-        .module = shaderModuleMainVert,
-        .pName = SHADER_ENTRY_POINT
-    };
-    vk::PipelineShaderStageCreateInfo fragShaderStageInfo{
-        .stage = vk::ShaderStageFlagBits::eFragment,
-        .module = shaderModuleMainFrag,
-        .pName = SHADER_ENTRY_POINT
-    };
-    vk::PipelineShaderStageCreateInfo shaderStages[] = {
-        vertShaderStageInfo,
-        fragShaderStageInfo
-    };
-
-    std::vector<vk::DynamicState> dynamicStates = {
-        /* Allow these states to be updated during runtime */
-        vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor
-    };
-
-    vk::PipelineDynamicStateCreateInfo dynamicState{
-        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
-        .pDynamicStates = dynamicStates.data()
-    };
-
-    vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
-    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{
-#ifdef TOPOLOGY_POINT_LIST
-        .topology = vk::PrimitiveTopology::ePointList,
-#endif
-#ifdef TOPOLOGY_LINE_LIST
-        .topology = vk::PrimitiveTopology::eLineList,
-#endif
-#ifdef TOPOLOGY_LINE_STRIP
-        .topology = vk::PrimitiveTopology::eLineStrip,
-#endif
-#ifdef TOPOLOGY_TRIANGLE_LIST
-        .topology = vk::PrimitiveTopology::eTriangleList,
-#endif
-#ifdef TOPOLOGY_TRIANGLE_STRIP
-        .topology = vk::PrimitiveTopology::eTriangleStrip
-#endif
-    };
-    vk::PipelineViewportStateCreateInfo viewportState{
-        .viewportCount = 1,
-        .scissorCount = 1
-    };
-
-    vk::PipelineRasterizationStateCreateInfo rasterizer{
-        .depthClampEnable = vk::False,
-        .rasterizerDiscardEnable = vk::False,
-#ifdef POLYGON_FILL
-        .polygonMode = vk::PolygonMode::eFill,
-#endif
-#ifdef POLYGON_LINE
-        .polygonMode = vk::PolygonMode::eLine,
-#endif
-#ifdef POLYGON_POINT
-        .polygonMode = vk::PolygonMode::ePoint,
-#endif
-        .cullMode = vk::CullModeFlagBits::eNone,
-        .frontFace = vk::FrontFace::eClockwise,
-        .depthBiasEnable = vk::False,
-        .lineWidth = 1.0f
-    };
-
-    vk::PipelineMultisampleStateCreateInfo multisampling{
-        /**
-         * Disable multisampling.
-         * 
-         * NOTE: enabling this feature in the future will require a GPU feature.
-         */
-        .rasterizationSamples = vk::SampleCountFlagBits::e1,
-        .sampleShadingEnable = vk::False
-    };
-
-    vk::PipelineColorBlendAttachmentState colorBlendAttachment{
-        /**
-         * Disable color blending.
-         */
-        .blendEnable = vk::False,
-        .colorWriteMask = vk::ColorComponentFlagBits::eR |
-            vk::ColorComponentFlagBits::eG |
-            vk::ColorComponentFlagBits::eB |
-            vk::ColorComponentFlagBits::eA
-    };
-
-    vk::PipelineColorBlendStateCreateInfo colorBlending{
-        .logicOpEnable = vk::False,
-        .logicOp = vk::LogicOp::eCopy,
-        .attachmentCount = 1,
-        .pAttachments = &colorBlendAttachment
-    };
-
-    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
-        .setLayoutCount = 0,
-        .pushConstantRangeCount = 0
-    };
-
-    m_pipelineLayout = vk::raii::PipelineLayout(device, pipelineLayoutInfo);
-
-    vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{
-        .colorAttachmentCount = 1,
-        .pColorAttachmentFormats = &swapChainSurfaceFormat.format
-    };
-    vk::GraphicsPipelineCreateInfo graphicsRenderingCreateInfo{
-        .stageCount = 2,
-        .pStages = shaderStages,
-        .pVertexInputState = &vertexInputInfo,
-        .pInputAssemblyState = &inputAssembly,
-        .pViewportState = &viewportState,
-        .pRasterizationState = &rasterizer,
-        .pMultisampleState = &multisampling,
-        .pColorBlendState = &colorBlending,
-        .pDynamicState = &dynamicState,
-        .layout = m_pipelineLayout,
-        // Set to nullptr because the render passes will be dynamic
-        .renderPass = nullptr
-    };
-
-    vk::StructureChain<
-        vk::GraphicsPipelineCreateInfo,
-        vk::PipelineRenderingCreateInfo
-    > pipelineCreateInfoChain = {
-        graphicsRenderingCreateInfo,
-        pipelineRenderingCreateInfo
-    };
-
-    m_graphicsPipeline = vk::raii::Pipeline(
-        device,
-        nullptr,
-        pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
-    );
-}
-
-/**
  * @brief Create a Vulkan command pool.
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
@@ -350,6 +162,7 @@ void Renderer::RecordCommandBuffer(uint32_t imageIndex) {
     std::vector<vk::Image> swapChainImages = m_swapChain.GetImages();
     vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
+    const vk::raii::Pipeline& graphicsPipeline = m_pipeline.GetGraphicsPipeline();
 
     auto &commandBuffer = m_commandBuffers[m_frameIndex];
     commandBuffer.begin({});
@@ -393,7 +206,7 @@ void Renderer::RecordCommandBuffer(uint32_t imageIndex) {
     commandBuffer.beginRendering(renderingInfo);
     commandBuffer.bindPipeline(
         vk::PipelineBindPoint::eGraphics,
-        *m_graphicsPipeline
+        *graphicsPipeline
     );
     commandBuffer.setViewport(
         0,
@@ -414,7 +227,7 @@ void Renderer::RecordCommandBuffer(uint32_t imageIndex) {
         )
     );
 
-    commandBuffer.draw(3, 1, 0, 0);
+    commandBuffer.draw(4, 1, 0, 0);
 
     commandBuffer.endRendering();
 

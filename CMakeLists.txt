@@ -21,6 +21,7 @@ add_executable(Geodesix
     src/vulkan_context.cpp
     src/swap_chain.cpp
     src/renderer.cpp
+    src/pipeline.cpp
 )
 
 target_link_libraries(Geodesix PRIVATE
