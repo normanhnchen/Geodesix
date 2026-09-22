@@ -7,18 +7,21 @@ Renderer::Renderer(
     SwapChain& swapChain,
     Pipeline& pipeline,
     CommandContext& commandContext,
-    SyncContext& syncContext
+    SyncContext& syncContext,
+    BufferContext& bufferContext
 )
     : m_window(window),
     m_vulkanContext(vulkanContext),
     m_swapChain(swapChain),
     m_pipeline(pipeline),
     m_commandContext(commandContext),
-    m_syncContext(syncContext) {
+    m_syncContext(syncContext),
+    m_bufferContext(bufferContext) {
 }
 
 void Renderer::Init() {
     m_pipeline.Init();
+    m_bufferContext.Init();
     m_commandContext.Init();
     m_syncContext.Init();
 }

@@ -26,6 +26,7 @@ import vulkan_hpp;
 #include "pipeline.hpp"
 #include "command_context.hpp"
 #include "sync_context.hpp"
+#include "buffer_context.hpp"
 #include "renderer.hpp"
 
 
@@ -46,7 +47,8 @@ private:
     VulkanContext m_vulkanContext {m_window};
     SwapChain m_swapChain {m_window, m_vulkanContext};
     Pipeline m_pipeline {m_vulkanContext, m_swapChain};
-    CommandContext m_commandContext {m_vulkanContext, m_swapChain, m_pipeline, m_syncContext};
+    BufferContext m_bufferContext {m_vulkanContext};
+    CommandContext m_commandContext {m_vulkanContext, m_swapChain, m_pipeline, m_syncContext, m_bufferContext};
     SyncContext m_syncContext {m_vulkanContext, m_swapChain};
     Renderer m_renderer {
         m_window,
@@ -54,7 +56,8 @@ private:
         m_swapChain,
         m_pipeline,
         m_commandContext,
-        m_syncContext
+        m_syncContext,
+        m_bufferContext
     };
 
     void InitVulkan();

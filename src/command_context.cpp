@@ -1,17 +1,21 @@
 #include "command_context.hpp"
 #include "vk_util.hpp"
+#include "vertex.hpp"
+#include "buffer_context.hpp"
 
 
 CommandContext::CommandContext(
     VulkanContext& vulkanContext,
     SwapChain& swapChain,
     Pipeline& pipeline,
-    SyncContext& syncContext
+    SyncContext& syncContext,
+    BufferContext& BufferContext
 )
     : m_vulkanContext(vulkanContext),
     m_swapChain(swapChain),
     m_pipeline(pipeline),
-    m_syncContext(syncContext) {
+    m_syncContext(syncContext),
+    m_bufferContext(BufferContext) {
 }
 
 void CommandContext::Init() {
@@ -29,6 +33,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
     const vk::raii::Pipeline& graphicsPipeline = m_pipeline.GetGraphicsPipeline();
+    const vk::raii::Buffer& vertexBuffer = m_bufferContext.GetVertexBuffer();
 
     auto &commandBuffer = m_commandBuffers[frameIndex];
     commandBuffer.begin({});
@@ -96,7 +101,9 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
         )
     );
 
-    commandBuffer.draw(4, 1, 0, 0);
+    commandBuffer.bindVertexBuffers(0, *vertexBuffer, {0});
+    
+    commandBuffer.draw(static_cast<uint32_t>(vertex_data::vertices.size()), 1, 0, 0);
 
     commandBuffer.endRendering();
 

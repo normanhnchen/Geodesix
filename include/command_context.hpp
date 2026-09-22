@@ -17,6 +17,7 @@ import vulkan_hpp;
 #include "swap_chain.hpp"
 #include "pipeline.hpp"
 #include "sync_context.hpp"
+#include "buffer_context.hpp"
 
 
 class CommandContext {
@@ -25,7 +26,8 @@ public:
         VulkanContext& vulkanContext,
         SwapChain& swapChain,
         Pipeline& pipeline,
-        SyncContext& syncContext
+        SyncContext& syncContext,
+        BufferContext& BufferContext
     );
 
     void Init();
@@ -39,6 +41,7 @@ private:
     SwapChain& m_swapChain;
     Pipeline& m_pipeline;
     SyncContext& m_syncContext;
+    BufferContext& m_bufferContext;
 
     vk::raii::CommandPool m_commandPool = nullptr;
     std::vector<vk::raii::CommandBuffer> m_commandBuffers;

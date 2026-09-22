@@ -13,6 +13,7 @@ import vulkan_hpp;
 
 #include "pipeline.hpp"
 #include "vk_util.hpp"
+#include "vertex.hpp"
 
 
 /**
@@ -125,7 +126,15 @@ void Pipeline::Create() {
         .pDynamicStates = dynamicStates.data()
     };
 
-    vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDescription,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
+        .pVertexAttributeDescriptions = attributeDescriptions.data()
+    };
+    
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly{
 #ifdef TOPOLOGY_POINT_LIST
         .topology = vk::PrimitiveTopology::ePointList,

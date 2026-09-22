@@ -20,6 +20,7 @@ import vulkan_hpp;
 #include "pipeline.hpp"
 #include "command_context.hpp"
 #include "sync_context.hpp"
+#include "buffer_context.hpp"
 
 
 class Renderer {
@@ -30,7 +31,8 @@ public:
         SwapChain& swapChain,
         Pipeline& pipeline,
         CommandContext& commandContext,
-        SyncContext& syncContext
+        SyncContext& syncContext,
+        BufferContext& bufferContext
     );
 
     void Init();
@@ -44,6 +46,7 @@ private:
     Pipeline& m_pipeline;
     CommandContext& m_commandContext;
     SyncContext& m_syncContext;
+    BufferContext& m_bufferContext;
 
     uint32_t m_frameIndex = 0;
 };
