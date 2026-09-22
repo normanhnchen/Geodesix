@@ -2,7 +2,10 @@
 
 #include "buffer_context.hpp"
 #include "vertex.hpp"
+#include "command_context.hpp"
 
+
+class CommandContext; // Forward declaration
 
 BufferContext::BufferContext(VulkanContext& vulkanContext)
     : m_vulkanContext(vulkanContext) {
@@ -12,47 +15,115 @@ void BufferContext::Init() {
     CreateVertexBuffer(vertex_data::vertices);
 }
 
+/**
+ * @brief Copies the CommandContext object internally.
+ * 
+ * Needed as the BufferContext and CommandContext objects circularly depend on each other.
+ */
+void BufferContext::RetrieveCommandContext(CommandContext& commandContext) {
+    m_commandContext = &commandContext;
+}
+
 const vk::raii::Buffer& BufferContext::GetVertexBuffer() const {
     return m_vertexBuffer;
 }
 
 /**
+ * @brief Creates an arbitrary Vulkan buffer.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html
+ */
+std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> BufferContext::CreateBuffer(
+    vk::DeviceSize size,
+    vk::BufferUsageFlags usage,
+    vk::MemoryPropertyFlags properties
+) {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    vk::BufferCreateInfo bufferInfo{
+        // Size of the buffer in bytes
+        .size = size,
+        .usage = usage,
+        .sharingMode = vk::SharingMode::eExclusive
+    };
+    vk::raii::Buffer buffer = vk::raii::Buffer(device, bufferInfo);
+    vk::MemoryRequirements memRequirements = buffer.getMemoryRequirements();
+    vk::MemoryAllocateInfo allocInfo{
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties)
+    };
+    vk::raii::DeviceMemory bufferMemory = vk::raii::DeviceMemory(device, allocInfo);
+    buffer.bindMemory(
+        *bufferMemory,
+        // We are allocating specifically for this vertex buffer; no memory offset
+        0
+    );
+    return {std::move(buffer), std::move(bufferMemory)};
+}
+
+void BufferContext::CopyBuffer(
+    vk::raii::Buffer& srcBuffer,
+    vk::raii::Buffer& dstBuffer,
+    vk::DeviceSize size
+) {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    const vk::raii::Queue& queue = m_vulkanContext.GetQueue();
+    const vk::raii::CommandPool& commandPool = m_commandContext->GetCommandPool();
+
+    vk::CommandBufferAllocateInfo allocInfo{
+        .commandPool = commandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+    vk::raii::CommandBuffer commandCopyBuffer = std::move(device.allocateCommandBuffers(allocInfo).front());
+
+    commandCopyBuffer.begin({
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    });
+
+    commandCopyBuffer.copyBuffer(*srcBuffer, *dstBuffer, vk::BufferCopy(0, 0, size));
+
+    commandCopyBuffer.end();
+
+    // Execute the command buffer
+    queue.submit(vk::SubmitInfo{
+        .commandBufferCount = 1,
+        .pCommandBuffers = &*commandCopyBuffer
+    }, nullptr);
+    // Wait until the command buffer has finished executing
+    queue.waitIdle();
+}
+
+/**
  * @brief Creates a Vulkan vertex buffer.
  * 
- * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/01_Vertex_buffer_creation.html
+ * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html
  */
 void BufferContext::CreateVertexBuffer(std::vector<Vertex> vertices) {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
 
-	vk::BufferCreateInfo bufferInfo{
-        // Size of the buffer in bytes
-        .size = sizeof(vertices[0]) * vertices.size(),
-        .usage = vk::BufferUsageFlagBits::eVertexBuffer,
-        .sharingMode = vk::SharingMode::eExclusive
-    };
+    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-    m_vertexBuffer = vk::raii::Buffer(device, bufferInfo);
-
-    vk::MemoryRequirements memRequirements = m_vertexBuffer.getMemoryRequirements();
-
-    vk::MemoryAllocateInfo memoryAllocateInfo{
-        .allocationSize = memRequirements.size,
-        .memoryTypeIndex = FindMemoryType(
-            memRequirements.memoryTypeBits,
-            vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent
-        )
-    };
-
-    vertexBufferMemory = vk::raii::DeviceMemory(device, memoryAllocateInfo);
-    m_vertexBuffer.bindMemory(
-        *vertexBufferMemory,
-        0 // We are allocating specifically for this vertex buffer; no memory offset
+    auto [stagingBuffer, stagingBufferMemory] = CreateBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent
     );
 
-    void* data = vertexBufferMemory.mapMemory(0, bufferInfo.size);
-    memcpy(data, vertices.data(), bufferInfo.size);
-    vertexBufferMemory.unmapMemory();
+    void *dataStaging = stagingBufferMemory.mapMemory(0, bufferSize);
+    memcpy(dataStaging, vertices.data(), bufferSize);
+    stagingBufferMemory.unmapMemory();
+
+    std::tie(m_vertexBuffer, vertexBufferMemory) = CreateBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eVertexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal
+    );
+
+    // Move the vertex data into the device local buffer
+    CopyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
 }
 
 /**

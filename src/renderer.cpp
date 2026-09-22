@@ -21,8 +21,9 @@ Renderer::Renderer(
 
 void Renderer::Init() {
     m_pipeline.Init();
-    m_bufferContext.Init();
     m_commandContext.Init();
+    m_bufferContext.RetrieveCommandContext(m_commandContext);
+    m_bufferContext.Init();
     m_syncContext.Init();
 }
 

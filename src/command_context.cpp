@@ -128,6 +128,10 @@ const std::vector<vk::raii::CommandBuffer>& CommandContext::GetCommandBuffers() 
     return m_commandBuffers;
 }
 
+const vk::raii::CommandPool& CommandContext::GetCommandPool() const {
+    return m_commandPool;
+}
+
 /**
  * @brief Create a Vulkan command pool.
  * 
