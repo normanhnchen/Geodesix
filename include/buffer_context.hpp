@@ -11,7 +11,7 @@ import vulkan_hpp;
 #endif
 
 #include "vulkan_context.hpp"
-#include "vertex.hpp"
+#include "buffer_data.hpp"
 
 
 class CommandContext; // Forward declaration
@@ -25,13 +25,17 @@ public:
     void RetrieveCommandContext(CommandContext& commandContext);
 
     const vk::raii::Buffer& GetVertexBuffer() const;
+    const vk::raii::Buffer& GetIndexBuffer() const;
 
 private:
     VulkanContext& m_vulkanContext;
     CommandContext* m_commandContext = nullptr;
 
     vk::raii::Buffer m_vertexBuffer = nullptr;
-    vk::raii::DeviceMemory vertexBufferMemory = nullptr;
+    vk::raii::DeviceMemory m_vertexBufferMemory = nullptr;
+
+    vk::raii::Buffer m_indexBuffer = nullptr;
+    vk::raii::DeviceMemory m_indexBufferMemory = nullptr;
 
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(
         vk::DeviceSize size,
@@ -46,5 +50,6 @@ private:
     );
 
     void CreateVertexBuffer(std::vector<Vertex> vertices);
+    void CreateIndexBuffer(std::vector<uint16_t> indices);
     uint32_t FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 };

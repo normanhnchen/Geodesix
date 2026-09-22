@@ -70,10 +70,25 @@ struct Vertex {
 };
 
 
-namespace vertex_data {
+namespace buffer_data {
+
+
+namespace vertex {
 
 
 extern const std::vector<Vertex> vertices;
 
 
-} // namespace vertex_data
+} // namespace vertex
+
+
+namespace index {
+
+
+extern const std::vector<uint16_t> indices;
+
+
+}
+
+
+} // namespace buffer_data

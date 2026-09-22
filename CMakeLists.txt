@@ -25,7 +25,7 @@ add_executable(Geodesix
     src/sync_context.cpp
     src/command_context.cpp
     src/vk_util.cpp
-    src/vertex.cpp
+    src/buffer_data.cpp
     src/buffer_context.cpp
 )
 

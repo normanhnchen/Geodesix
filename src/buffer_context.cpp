@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "buffer_context.hpp"
-#include "vertex.hpp"
+#include "buffer_data.hpp"
 #include "command_context.hpp"
 
 
@@ -12,7 +12,8 @@ BufferContext::BufferContext(VulkanContext& vulkanContext)
 }
 
 void BufferContext::Init() {
-    CreateVertexBuffer(vertex_data::vertices);
+    CreateVertexBuffer(buffer_data::vertex::vertices);
+    CreateIndexBuffer(buffer_data::index::indices);
 }
 
 /**
@@ -26,6 +27,10 @@ void BufferContext::RetrieveCommandContext(CommandContext& commandContext) {
 
 const vk::raii::Buffer& BufferContext::GetVertexBuffer() const {
     return m_vertexBuffer;
+}
+
+const vk::raii::Buffer& BufferContext::GetIndexBuffer() const {
+    return m_indexBuffer;
 }
 
 /**
@@ -115,7 +120,7 @@ void BufferContext::CreateVertexBuffer(std::vector<Vertex> vertices) {
     memcpy(dataStaging, vertices.data(), bufferSize);
     stagingBufferMemory.unmapMemory();
 
-    std::tie(m_vertexBuffer, vertexBufferMemory) = CreateBuffer(
+    std::tie(m_vertexBuffer, m_vertexBufferMemory) = CreateBuffer(
         bufferSize,
         vk::BufferUsageFlagBits::eVertexBuffer |
         vk::BufferUsageFlagBits::eTransferDst,
@@ -124,6 +129,30 @@ void BufferContext::CreateVertexBuffer(std::vector<Vertex> vertices) {
 
     // Move the vertex data into the device local buffer
     CopyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
+}
+
+void BufferContext::CreateIndexBuffer(std::vector<uint16_t> indices) {
+		vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+		auto [stagingBuffer, stagingBufferMemory] = CreateBuffer(
+            bufferSize,
+            vk::BufferUsageFlagBits::eTransferSrc,
+            vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent
+        );
+
+		void *data = stagingBufferMemory.mapMemory(0, bufferSize);
+		memcpy(data, indices.data(), (size_t) bufferSize);
+		stagingBufferMemory.unmapMemory();
+
+		std::tie(m_indexBuffer, m_indexBufferMemory) = CreateBuffer(
+            bufferSize,
+            vk::BufferUsageFlagBits::eIndexBuffer |
+            vk::BufferUsageFlagBits::eTransferDst,
+            vk::MemoryPropertyFlagBits::eDeviceLocal
+        );
+
+		CopyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
 }
 
 /**

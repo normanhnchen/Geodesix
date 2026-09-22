@@ -1,6 +1,6 @@
 #include "command_context.hpp"
 #include "vk_util.hpp"
-#include "vertex.hpp"
+#include "buffer_data.hpp"
 #include "buffer_context.hpp"
 
 
@@ -34,6 +34,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
     const vk::raii::Pipeline& graphicsPipeline = m_pipeline.GetGraphicsPipeline();
     const vk::raii::Buffer& vertexBuffer = m_bufferContext.GetVertexBuffer();
+    const vk::raii::Buffer& indexBuffer = m_bufferContext.GetIndexBuffer();
 
     auto &commandBuffer = m_commandBuffers[frameIndex];
     commandBuffer.begin({});
@@ -102,8 +103,12 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     );
 
     commandBuffer.bindVertexBuffers(0, *vertexBuffer, {0});
+    commandBuffer.bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint16);
     
-    commandBuffer.draw(static_cast<uint32_t>(vertex_data::vertices.size()), 1, 0, 0);
+    commandBuffer.drawIndexed(
+        static_cast<uint32_t>(buffer_data::index::indices.size()),
+        1, 0, 0, 0
+    );
 
     commandBuffer.endRendering();
 

@@ -13,7 +13,7 @@ import vulkan_hpp;
 
 #include "pipeline.hpp"
 #include "vk_util.hpp"
-#include "vertex.hpp"
+#include "buffer_data.hpp"
 
 
 /**
