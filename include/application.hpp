@@ -46,10 +46,10 @@ private:
     Window m_window {WIDTH, HEIGHT, "Geodesix"};
     VulkanContext m_vulkanContext {m_window};
     SwapChain m_swapChain {m_window, m_vulkanContext};
-    Pipeline m_pipeline {m_vulkanContext, m_swapChain};
-    BufferContext m_bufferContext {m_vulkanContext};
-    CommandContext m_commandContext {m_vulkanContext, m_swapChain, m_pipeline, m_syncContext, m_bufferContext};
     SyncContext m_syncContext {m_vulkanContext, m_swapChain};
+    BufferContext m_bufferContext {m_vulkanContext, m_syncContext, m_swapChain};
+    Pipeline m_pipeline {m_vulkanContext, m_swapChain, m_bufferContext};
+    CommandContext m_commandContext {m_vulkanContext, m_swapChain, m_pipeline, m_syncContext, m_bufferContext};
     Renderer m_renderer {
         m_window,
         m_vulkanContext,

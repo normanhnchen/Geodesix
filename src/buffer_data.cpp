@@ -33,4 +33,10 @@ const std::vector<uint16_t> indices = {
 } // namespace index
 
 
+namespace uniform {
+
+
+} // namespace uniform
+
+
 } // namespace buffer_data

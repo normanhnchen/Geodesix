@@ -33,8 +33,10 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
     const vk::raii::Pipeline& graphicsPipeline = m_pipeline.GetGraphicsPipeline();
+    const vk::raii::PipelineLayout& pipelineLayout = m_pipeline.GetLayout();
     const vk::raii::Buffer& vertexBuffer = m_bufferContext.GetVertexBuffer();
     const vk::raii::Buffer& indexBuffer = m_bufferContext.GetIndexBuffer();
+    const std::vector<vk::raii::DescriptorSet>& descriptorSets = m_bufferContext.GetDescriptorSets();
 
     auto &commandBuffer = m_commandBuffers[frameIndex];
     commandBuffer.begin({});
@@ -87,9 +89,12 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
         0,
         vk::Viewport(
             0.0f,
-            0.0f,
-            static_cast<float>(swapChainExtent.width),
             static_cast<float>(swapChainExtent.height),
+            static_cast<float>(swapChainExtent.width),
+            // Flip because GLM was original designed for OpenGL, where the y-axis convention is
+            // opposite Vulkan's
+            // NOTE: only flip it when sending a GLM perspective uniform!
+            -static_cast<float>(swapChainExtent.height),
             0.0f,
             1.0f
         )
@@ -104,6 +109,13 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
 
     commandBuffer.bindVertexBuffers(0, *vertexBuffer, {0});
     commandBuffer.bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint16);
+    commandBuffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        pipelineLayout,
+        0,
+        *descriptorSets[frameIndex],
+        nullptr
+    );
     
     commandBuffer.drawIndexed(
         static_cast<uint32_t>(buffer_data::index::indices.size()),

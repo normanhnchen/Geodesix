@@ -72,8 +72,14 @@ const std::string SHADER_MAIN_FRAG_PATH = std::string(SHADER_SPIRV_DIR / "main.f
  */
 constexpr const char* SHADER_ENTRY_POINT = "main";
 
-Pipeline::Pipeline(VulkanContext& vulkanContext, SwapChain& swapChain)
-    : m_vulkanContext(vulkanContext), m_swapChain(swapChain) {
+Pipeline::Pipeline(
+    VulkanContext& vulkanContext,
+    SwapChain& swapChain,
+    BufferContext& bufferContext
+)
+    : m_vulkanContext(vulkanContext),
+    m_swapChain(swapChain),
+    m_bufferContext(bufferContext) {
 }
 
 void Pipeline::Init() {
@@ -84,6 +90,10 @@ const vk::raii::Pipeline& Pipeline::GetGraphicsPipeline() const {
     return m_graphicsPipeline;
 }
 
+const vk::raii::PipelineLayout& Pipeline::GetLayout() const {
+    return m_pipelineLayout;
+}
+
 /**
  * @brief Create the graphics pipeline for rendering.
  * 
@@ -91,8 +101,8 @@ const vk::raii::Pipeline& Pipeline::GetGraphicsPipeline() const {
  */
 void Pipeline::Create() {
     vk::SurfaceFormatKHR swapChainSurfaceFormat = m_swapChain.GetSurfaceFormat();
-
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    const vk::raii::DescriptorSetLayout& descriptorSetLayout = m_bufferContext.GetDescriptorSetLayout();
 
     auto shaderCodeMainVert = vk_util::ReadFile(SHADER_MAIN_VERT_PATH);
     auto shaderCodeMainFrag = vk_util::ReadFile(SHADER_MAIN_FRAG_PATH);
@@ -170,7 +180,10 @@ void Pipeline::Create() {
         .polygonMode = vk::PolygonMode::ePoint,
 #endif
         .cullMode = vk::CullModeFlagBits::eNone,
-        .frontFace = vk::FrontFace::eClockwise,
+        // Flipping the y-axis (see CommandContext::RecordCommandBuffer, viewport struct) causes
+        // the vertices are being drawn in counter-clockwise order
+        // NOTE: only flip the direction 
+        .frontFace = vk::FrontFace::eCounterClockwise,
         .depthBiasEnable = vk::False,
         .lineWidth = 1.0f
     };
@@ -204,7 +217,8 @@ void Pipeline::Create() {
     };
 
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
-        .setLayoutCount = 0,
+        .setLayoutCount = 1,
+        .pSetLayouts = &*descriptorSetLayout,
         .pushConstantRangeCount = 0
     };
 

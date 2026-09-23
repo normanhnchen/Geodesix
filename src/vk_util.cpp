@@ -74,5 +74,32 @@ void TransitionImageLayout(
     commandBuffers[frameIndex].pipelineBarrier2(dependency_info);
 }
 
+/**
+ * @brief Find the right type of memory to use (that is compatible with the GPU).
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/01_Vertex_buffer_creation.html
+ */
+uint32_t FindMemoryType(
+    uint32_t typeFilter,
+    vk::MemoryPropertyFlags properties,
+    const vk::raii::PhysicalDevice& physicalDevice
+) {
+    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
+
+    /* Find a memory type suitable for the buffer */
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if (
+            // The memory type is suitable if the bit is 1
+            (typeFilter & (1 << i)) &&
+            // The memory type is suitable if it matches our requested properties
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties
+        ) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Failed to find suitable memory type!");
+}
+
 
 } // namespace vk_util

@@ -34,5 +34,11 @@ void TransitionImageLayout(
     CommandContext& commandContext
 );
 
+uint32_t FindMemoryType(
+    uint32_t typeFilter,
+    vk::MemoryPropertyFlags properties,
+    const vk::raii::PhysicalDevice& physicalDevice
+);
+
 
 } // namespace vk_util

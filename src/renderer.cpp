@@ -20,10 +20,10 @@ Renderer::Renderer(
 }
 
 void Renderer::Init() {
-    m_pipeline.Init();
     m_commandContext.Init();
     m_bufferContext.RetrieveCommandContext(m_commandContext);
     m_bufferContext.Init();
+    m_pipeline.Init();
     m_syncContext.Init();
 }
 
@@ -60,6 +60,8 @@ void Renderer::DrawFrame() {
     }
 
     uint32_t imageIndex = *imageIndexOpt;
+
+    m_bufferContext.UpdateUniformBuffer(m_frameIndex);
 
     m_syncContext.ResetFences(m_frameIndex);
 

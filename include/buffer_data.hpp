@@ -91,4 +91,17 @@ extern const std::vector<uint16_t> indices;
 }
 
 
+namespace uniform {
+
+
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
+
+} // namespace uniform
+
+
 } // namespace buffer_data

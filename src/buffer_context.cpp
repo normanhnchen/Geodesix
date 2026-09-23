@@ -1,19 +1,68 @@
 #include <vector>
+#include <chrono>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "buffer_context.hpp"
 #include "buffer_data.hpp"
 #include "command_context.hpp"
+#include "vk_util.hpp"
 
 
 class CommandContext; // Forward declaration
 
-BufferContext::BufferContext(VulkanContext& vulkanContext)
-    : m_vulkanContext(vulkanContext) {
+BufferContext::BufferContext(
+    VulkanContext& vulkanContext,
+    SyncContext& syncContext,
+    SwapChain& swapChain
+)
+    : m_vulkanContext(vulkanContext),
+    m_syncContext(syncContext),
+    m_swapChain(swapChain) {
 }
 
 void BufferContext::Init() {
     CreateVertexBuffer(buffer_data::vertex::vertices);
     CreateIndexBuffer(buffer_data::index::indices);
+    CreateUniformBuffers(buffer_data::uniform::UniformBufferObject{});
+    CreateDescriptorSetLayout();
+    CreateDescriptorPool();
+    CreateDescriptorSets(buffer_data::uniform::UniformBufferObject{});
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
+ */
+void BufferContext::UpdateUniformBuffer(uint32_t frameIndex) {
+    vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
+
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<
+            float, std::chrono::seconds::period
+        >(currentTime - startTime).count();
+
+    buffer_data::uniform::UniformBufferObject ubo{};
+    ubo.model = rotate(
+        glm::mat4(1.0f),
+        time * glm::radians(90.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    ubo.view = lookAt(
+        glm::vec3(2.0f, 2.0f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+    ubo.proj = glm::perspective(
+        glm::radians(45.0f),
+        static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height),
+        0.1f,
+        10.0f
+    );
+
+    memcpy(m_uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
 
 /**
@@ -33,6 +82,14 @@ const vk::raii::Buffer& BufferContext::GetIndexBuffer() const {
     return m_indexBuffer;
 }
 
+const vk::raii::DescriptorSetLayout& BufferContext::GetDescriptorSetLayout() const {
+    return m_descriptorSetLayout;
+}
+
+const std::vector<vk::raii::DescriptorSet>& BufferContext::GetDescriptorSets() const {
+    return m_descriptorSets;
+}
+
 /**
  * @brief Creates an arbitrary Vulkan buffer.
  * 
@@ -44,6 +101,7 @@ std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> BufferContext::CreateBuffer(
     vk::MemoryPropertyFlags properties
 ) {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    const vk::raii::PhysicalDevice& physicalDevice = m_vulkanContext.GetPhysicalDevice();
 
     vk::BufferCreateInfo bufferInfo{
         // Size of the buffer in bytes
@@ -55,7 +113,11 @@ std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> BufferContext::CreateBuffer(
     vk::MemoryRequirements memRequirements = buffer.getMemoryRequirements();
     vk::MemoryAllocateInfo allocInfo{
         .allocationSize = memRequirements.size,
-        .memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties)
+        .memoryTypeIndex = vk_util::FindMemoryType(
+            memRequirements.memoryTypeBits,
+            properties,
+            physicalDevice
+        )
     };
     vk::raii::DeviceMemory bufferMemory = vk::raii::DeviceMemory(device, allocInfo);
     buffer.bindMemory(
@@ -66,6 +128,9 @@ std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> BufferContext::CreateBuffer(
     return {std::move(buffer), std::move(bufferMemory)};
 }
 
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html
+ */
 void BufferContext::CopyBuffer(
     vk::raii::Buffer& srcBuffer,
     vk::raii::Buffer& dstBuffer,
@@ -131,6 +196,9 @@ void BufferContext::CreateVertexBuffer(std::vector<Vertex> vertices) {
     CopyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
 }
 
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/03_Index_buffer.html
+ */
 void BufferContext::CreateIndexBuffer(std::vector<uint16_t> indices) {
 		vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
@@ -156,26 +224,97 @@ void BufferContext::CreateIndexBuffer(std::vector<uint16_t> indices) {
 }
 
 /**
- * @brief Find the right type of memory to use (that is compatible with the GPU).
- * 
- * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/01_Vertex_buffer_creation.html
+ * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
  */
-uint32_t BufferContext::FindMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
-    const vk::raii::PhysicalDevice& physicalDevice = m_vulkanContext.GetPhysicalDevice();
-
-    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
-
-    /* Find a memory type suitable for the buffer */
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if (
-            // The memory type is suitable if the bit is 1
-            (typeFilter & (1 << i)) &&
-            // The memory type is suitable if it matches our requested properties
-            (memProperties.memoryTypes[i].propertyFlags & properties) == properties
-        ) {
-            return i;
-        }
+void BufferContext::CreateUniformBuffers(auto ubo) {
+    for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
+        vk::DeviceSize bufferSize = sizeof(ubo);
+        auto [buffer, bufferMem] = CreateBuffer(
+            bufferSize,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent
+        );
+        m_uniformBuffers.emplace_back(std::move(buffer));
+        m_uniformBuffersMemory.emplace_back(std::move(bufferMem));
+        m_uniformBuffersMapped.emplace_back(
+            m_uniformBuffersMemory.back().mapMemory(0, bufferSize)
+        );
     }
+}
 
-    throw std::runtime_error("Failed to find suitable memory type!");
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
+ */
+void BufferContext::CreateDescriptorSetLayout() {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    vk::DescriptorSetLayoutBinding uboLayoutBinding{
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex
+    };
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{
+        .bindingCount = 1,
+        .pBindings = &uboLayoutBinding
+    };
+    m_descriptorSetLayout = vk::raii::DescriptorSetLayout(device, layoutInfo);
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/01_Descriptor_pool_and_sets.html
+ */
+void BufferContext::CreateDescriptorPool() {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    vk::DescriptorPoolSize poolSize{
+        .type = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = m_syncContext.maxFramesInFlight
+    };
+
+    vk::DescriptorPoolCreateInfo poolInfo{
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = m_syncContext.maxFramesInFlight,
+        .poolSizeCount = 1,
+        .pPoolSizes = &poolSize
+    };
+
+    m_descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/01_Descriptor_pool_and_sets.html
+ */
+void BufferContext::CreateDescriptorSets(auto ubo) {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    std::vector<vk::DescriptorSetLayout> layouts(
+        m_syncContext.maxFramesInFlight,
+        *m_descriptorSetLayout
+    );
+    vk::DescriptorSetAllocateInfo allocInfo{
+        .descriptorPool = m_descriptorPool,
+        .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        .pSetLayouts = layouts.data()
+    };
+
+    m_descriptorSets = device.allocateDescriptorSets(allocInfo);
+
+    for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
+        vk::DescriptorBufferInfo bufferInfo{
+            .buffer = m_uniformBuffers[i],
+            .offset = 0,
+            .range = sizeof(ubo)
+        };
+        vk::WriteDescriptorSet descriptorWrite{
+            .dstSet = m_descriptorSets[i],
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &bufferInfo
+        };
+        device.updateDescriptorSets(descriptorWrite, {});
+    }
 }
