@@ -23,3 +23,6 @@ nav:
     - Vulkan/The_Logical_Device.md
     - Vulkan/Window_Surface.md
     - Vulkan/The_Swap_Chain.md
+    - Vulkan/Image_Views.md
+    - Vulkan/Pipelines.md
+    - Vulkan/Shaders.md
