@@ -21,4 +21,5 @@ nav:
     - Vulkan/The_Physical_Device.md
     - Vulkan/Queues.md
     - Vulkan/The_Logical_Device.md
-    - Vulkan/Window_Surface
+    - Vulkan/Window_Surface.md
+    - Vulkan/The_Swap_Chain.md
