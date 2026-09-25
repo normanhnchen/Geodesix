@@ -20,3 +20,4 @@ nav:
     - Vulkan/Validation_Layers.md
     - Vulkan/The_Physical_Device.md
     - Vulkan/Queues.md
+    - Vulkan/The_Logical_Device.md
