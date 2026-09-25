@@ -22,6 +22,24 @@ Similarly to `vk::PresentModeKHR::eFifo`, the swap chain in `vk::PresentModeKHR:
 
 This mode is another variation of the `vk::PresentModeKHR::eFifo` except when the queue is full, images already in the queue are replaced with newer frames. Commonly known as *triple buffering*, this mode usually uses more energy while avoiding screen tearing. It result in lower latency than `vk::PresentModeKHR::eFifo` because the GPU is never blocked. 
 
+## The Swap Extent
+
+The swap extent, or the resolution of the swap chain images has the exact same dimensions as the resolution of the window surface. Because Vulkan uses pixels by convention, the swap chain image resolutions must also be in pixels.
+
+For GLFW, we must use `glfwGetFramebufferSize` to get the exact window resolution *in pixels*, or otherwise screen coordinates used by GLFW by default will result in a resolution mismatch (in high DPI displays).
+
+## Surface Formatting
+
+The format of a surface defines the displayed color space and its color precision (color depth) or color formatting.
+
+### Color Spaces
+
+Common color spaces used for surface formatting include `VK_COLOR_SPACE_SRGB_NONLINEAR_KHR` or sRGB formats such as `VK_FORMAT_B8G8R8A8_SRGB` or `VK_FORMAT_R8G8B8A8_SRGB` with automatic [gamma correction](https://en.wikipedia.org/wiki/Gamma_correction).
+
+Note: *In sRGB formats, it is important to note that the final image before displaying **must contain linear sRGB values**!*
+
+(More on color spaces can be found in the [official documentation](https://docs.vulkan.org/spec/latest/chapters/formats.html).)
+
 ## References
 
 https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html
