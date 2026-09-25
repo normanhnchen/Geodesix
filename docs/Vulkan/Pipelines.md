@@ -14,30 +14,29 @@ A standard graphics pipeline is outlined as follows:
     ↓<br>
     <details>
         <summary><b>Vertex Shader</b></summary>
-        <p style="text-align: left;"><b>Runs code on each vertex to perform transformations on them.</b></p>
+        <p style="text-align: left;">Runs code on each vertex to perform transformations on them.</p>
     </details>
     ↓<br>
     <details>
         <summary><b>Tessellation (Optional)</b></summary>
-        <p style="text-align: left;"><b>Allows subdivision of geometry.</b></p>
+        <p style="text-align: left;">Allows subdivision of geometry.</p>
     </details>
     ↓<br>
-    <details>
+    <details> 
         <summary><b>Rasterization</b></summary>
-        <p style="text-align: left;"><b>Converts geometric primitives to fragments (pixel candidates) overlapping the screen.</b></p>
+        <p style="text-align: left;">Converts geometric primitives to fragments (pixel candidates) overlapping the screen.</p>
     </details>
     ↓<br>
     <details>
         <summary><b>Fragment Shader</b></summary>
-        <p style="text-align: left;"><b>Runs code on each fragment to calculate the final color, lighting, and textures.</b></p>
+        <p style="text-align: left;">Runs code on each fragment to calculate the final color, lighting, and textures.</p>
     </details>
     ↓<br>
     <details>
         <summary><b>Color Blending</b></summary>
-        <p style="text-align: left;"><b>Mixes the final pixel values with the existing data inside the framebuffer (and handling transparency).</b></p>
+        <p style="text-align: left;">Mixes the final pixel values with the existing data inside the framebuffer (and handling transparency).</p>
     </details>
 </div>
-
 
 ## References
 
