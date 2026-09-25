@@ -17,6 +17,6 @@ nav:
     - Vulkan/Overview.md
     - Vulkan/Resource_Acquisition_Is_Initialization.md
     - Vulkan/The_Vulkan_Instance.md
-    - Vulkan/The_Physical_Device.md
     - Vulkan/Validation_Layers.md
+    - Vulkan/The_Physical_Device.md
     - Vulkan/Queues.md
