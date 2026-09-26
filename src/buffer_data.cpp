@@ -1,4 +1,5 @@
 #include <vector>
+#include <random>
 
 #include <glm/glm.hpp>
 
@@ -6,6 +7,12 @@
 
 
 namespace buffer_data {
+
+
+namespace particle {
+
+
+} // namespace particle
 
 
 namespace vertex {
@@ -31,12 +38,6 @@ const std::vector<uint16_t> indices = {
 
 
 } // namespace index
-
-
-namespace uniform {
-
-
-} // namespace uniform
 
 
 } // namespace buffer_data

@@ -386,14 +386,15 @@ void VulkanContext::CreateLogicalDevice() {
 
     for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++) {
         if ((queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) &&
+            (queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eCompute) &&
             m_physicalDevice.getSurfaceSupportKHR(qfpIndex, *m_surface)) {
-            // Found a queue family that supports both Vulkan graphics and present surfaces
+            // Found a queue family that supports Vulkan graphics, compute, and present surfaces
             m_queueIndex = qfpIndex;
             break;
         }
     }
     if (m_queueIndex == ~0) {
-        throw std::runtime_error("Could not find a queue for Vulkan graphics and present surfaces!");
+        throw std::runtime_error("Could not find a queue for Vulkan graphics, compute, and present surfaces!");
     }
 
     // Decide which queues have relative priority over other queues

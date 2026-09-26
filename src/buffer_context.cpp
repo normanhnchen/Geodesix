@@ -10,7 +10,9 @@
 #include "vk_util.hpp"
 
 
-class CommandContext; // Forward declaration
+// Forward declaration
+// Used because BufferContext and CommandContext circularly depend on eachother
+class CommandContext;
 
 BufferContext::BufferContext(
     VulkanContext& vulkanContext,
@@ -23,12 +25,12 @@ BufferContext::BufferContext(
 }
 
 void BufferContext::Init() {
-    CreateVertexBuffer(buffer_data::vertex::vertices);
-    CreateIndexBuffer(buffer_data::index::indices);
-    CreateUniformBuffers(buffer_data::uniform::UniformBufferObject{});
+    CreateVertexBuffer();
+    CreateIndexBuffer();
+    CreateUniformBuffers();
     CreateDescriptorSetLayout();
     CreateDescriptorPool();
-    CreateDescriptorSets(buffer_data::uniform::UniformBufferObject{});
+    CreateDescriptorSets();
 }
 
 /**
@@ -104,9 +106,9 @@ std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> BufferContext::CreateBuffer(
     const vk::raii::PhysicalDevice& physicalDevice = m_vulkanContext.GetPhysicalDevice();
 
     vk::BufferCreateInfo bufferInfo{
-        // Size of the buffer in bytes
         .size = size,
         .usage = usage,
+        // Specify that access can only be exclusive to one queue family at a time
         .sharingMode = vk::SharingMode::eExclusive
     };
     vk::raii::Buffer buffer = vk::raii::Buffer(device, bufferInfo);
@@ -169,8 +171,9 @@ void BufferContext::CopyBuffer(
  * 
  * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/02_Staging_buffer.html
  */
-void BufferContext::CreateVertexBuffer(std::vector<Vertex> vertices) {
+void BufferContext::CreateVertexBuffer() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    std::vector<Vertex> vertices = buffer_data::vertex::vertices;
 
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
@@ -199,36 +202,38 @@ void BufferContext::CreateVertexBuffer(std::vector<Vertex> vertices) {
 /**
  * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/03_Index_buffer.html
  */
-void BufferContext::CreateIndexBuffer(std::vector<uint16_t> indices) {
-		vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+void BufferContext::CreateIndexBuffer() {
+    std::vector<uint16_t> indices = buffer_data::index::indices;
 
-		auto [stagingBuffer, stagingBufferMemory] = CreateBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent
-        );
+    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-		void *data = stagingBufferMemory.mapMemory(0, bufferSize);
-		memcpy(data, indices.data(), (size_t) bufferSize);
-		stagingBufferMemory.unmapMemory();
+    auto [stagingBuffer, stagingBufferMemory] = CreateBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent
+    );
 
-		std::tie(m_indexBuffer, m_indexBufferMemory) = CreateBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eIndexBuffer |
-            vk::BufferUsageFlagBits::eTransferDst,
-            vk::MemoryPropertyFlagBits::eDeviceLocal
-        );
+    void *data = stagingBufferMemory.mapMemory(0, bufferSize);
+    memcpy(data, indices.data(), (size_t) bufferSize);
+    stagingBufferMemory.unmapMemory();
 
-		CopyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
+    std::tie(m_indexBuffer, m_indexBufferMemory) = CreateBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eIndexBuffer |
+        vk::BufferUsageFlagBits::eTransferDst,
+        vk::MemoryPropertyFlagBits::eDeviceLocal
+    );
+
+    CopyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
 }
 
 /**
  * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
  */
-void BufferContext::CreateUniformBuffers(auto ubo) {
+void BufferContext::CreateUniformBuffers() {
     for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
-        vk::DeviceSize bufferSize = sizeof(ubo);
+        vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::ComputeUniformBufferObject);
         auto [buffer, bufferMem] = CreateBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -286,7 +291,7 @@ void BufferContext::CreateDescriptorPool() {
 /**
  * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/01_Descriptor_pool_and_sets.html
  */
-void BufferContext::CreateDescriptorSets(auto ubo) {
+void BufferContext::CreateDescriptorSets() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
 
     std::vector<vk::DescriptorSetLayout> layouts(
@@ -305,7 +310,7 @@ void BufferContext::CreateDescriptorSets(auto ubo) {
         vk::DescriptorBufferInfo bufferInfo{
             .buffer = m_uniformBuffers[i],
             .offset = 0,
-            .range = sizeof(ubo)
+            .range = sizeof(buffer_data::uniform::ComputeUniformBufferObject )
         };
         vk::WriteDescriptorSet descriptorWrite{
             .dstSet = m_descriptorSets[i],

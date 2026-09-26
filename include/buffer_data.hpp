@@ -97,4 +97,10 @@ struct UniformBufferObject {
 } // namespace uniform
 
 
+namespace particle {
+
+
+} // namespace uniform
+
+
 } // namespace buffer_data

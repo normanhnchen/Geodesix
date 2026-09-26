@@ -9,7 +9,9 @@
 #include "swap_chain.hpp"
 
 
-class CommandContext; // Forward declaration
+// Forward declaration
+// Used because BufferContext and CommandContext circularly depend on eachother
+class CommandContext;
 
 class BufferContext {
 public:
@@ -51,6 +53,16 @@ private:
     vk::raii::DescriptorPool m_descriptorPool = nullptr;
     std::vector<vk::raii::DescriptorSet> m_descriptorSets;
 
+    std::vector<vk::raii::Buffer> m_shaderStorageBuffers;
+    std::vector<vk::raii::DeviceMemory> m_shaderStorageBuffersMemory;
+
+    std::vector<vk::raii::Buffer> m_computeUniformBuffers;
+    std::vector<vk::raii::DeviceMemory> m_computeUniformBuffersMemory;
+    std::vector<void*> m_computeUniformBuffersMapped;
+
+    vk::raii::DescriptorSetLayout m_computeDescriptorSetLayout = nullptr;
+    std::vector<vk::raii::DescriptorSet> m_computeDescriptorSets;
+
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(
         vk::DeviceSize size,
         vk::BufferUsageFlags usage,
@@ -63,11 +75,11 @@ private:
         vk::DeviceSize size
     );
 
-    void CreateVertexBuffer(std::vector<Vertex> vertices);
-    void CreateIndexBuffer(std::vector<uint16_t> indices);
-    void CreateUniformBuffers(auto ubo);
+    void CreateVertexBuffer();
+    void CreateIndexBuffer();
+    void CreateUniformBuffers();
 
     void CreateDescriptorSetLayout();
     void CreateDescriptorPool();
-    void CreateDescriptorSets(auto ubo);
+    void CreateDescriptorSets();
 };
