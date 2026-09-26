@@ -8,13 +8,11 @@
       
       
       
-        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/Resource_Acquisition_Is_Initialization/">
+        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/Dynamic_States/">
       
       
-        <link rel="prev" href="../Overview/">
+        <link rel="prev" href="../Fixed-Functions/">
       
-      
-        <link rel="next" href="../The_Vulkan_Instance/">
       
       
         
@@ -25,7 +23,7 @@
     
     
       
-        <title>Resource Acquisition Is Initialization - Geodesix Documentation</title>
+        <title>Dynamic States - Geodesix Documentation</title>
       
     
     
@@ -66,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#resource-acquisition-is-initialization" class="md-skip">
+        <a href="#dynamic-states" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Resource Acquisition Is Initialization
+              Dynamic States
             
           </span>
         </div>
@@ -375,19 +373,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Resource_Acquisition_Is_Initialization/" class="md-nav__link">
         
   
   
@@ -403,7 +392,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -721,10 +709,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Dynamic_States/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic States
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -740,6 +755,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-viewport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Viewport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scissors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scissors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -780,6 +848,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-viewport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Viewport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scissors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scissors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -795,10 +904,14 @@
 
 
 
-<h1 id="resource-acquisition-is-initialization">Resource Acquisition Is Initialization</h1>
-<p><strong>Resource Acquisition Is Initialization (RAII)</strong>, is a programming concept where a resource's lifecycle is tied to a local variable's lifetime. The constructor first acquires the resource, then after it is automatically destroyed and the resources are cleaned up.</p>
-<p>In Vulkan, RAII is used very commonly used throughout an application to solve the challenge of manual resource management in such a verbose API in C++. Therefore, we use Vulkan's official RAII bindings.</p>
-<p>Vulkan RAII objects can be retrieved with the <code>vk::raii</code> namespace containing RAII wrapper classes.</p>
+<h1 id="dynamic-states">Dynamic States</h1>
+<p>In contrast to <a href="../Fixed-Functions/">fixed-functions</a>, dynamic states allow runtime configuration of a limitated amount of states in pipeline objects compared to fixed-functions' immutable states.</p>
+<h2 id="the-viewport">The Viewport</h2>
+<p>The viewport dyanmic state lets you control the position and size of the viewport. Therefore, upon window resizing, the entire graphics pipeline doesn't need to be recreated.</p>
+<h2 id="scissors">Scissors</h2>
+<p>The Vulkan scissor dyanmic state lets you control its clipping boundary. Therefore, upon window resizing or in UI systems, the entire graphics pipeline doesn't need to be recreated.</p>
+<h2 id="references">References</h2>
+<p><a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/02_Fixed_functions.html">https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/02_Fixed_functions.html</a>  </p>
 
 
 
@@ -828,7 +941,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../Overview/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+          <a href="../Fixed-Functions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fixed-Functions">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -838,27 +951,11 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Overview
+                Fixed-Functions
               </div>
             </div>
           </a>
         
-        
-          
-          <a href="../The_Vulkan_Instance/" class="md-footer__link md-footer__link--next" aria-label="Next: The Vulkan Instance">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                The Vulkan Instance
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
         
       </nav>
     

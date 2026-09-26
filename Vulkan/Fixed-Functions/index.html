@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/Resource_Acquisition_Is_Initialization/">
+        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/Fixed-Functions/">
       
       
-        <link rel="prev" href="../Overview/">
+        <link rel="prev" href="../Shaders/">
       
       
-        <link rel="next" href="../The_Vulkan_Instance/">
+        <link rel="next" href="../Dynamic_States/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Resource Acquisition Is Initialization - Geodesix Documentation</title>
+        <title>Fixed-Functions - Geodesix Documentation</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#resource-acquisition-is-initialization" class="md-skip">
+        <a href="#fixed-functions" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Resource Acquisition Is Initialization
+              Fixed-Functions
             
           </span>
         </div>
@@ -375,19 +375,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../Resource_Acquisition_Is_Initialization/" class="md-nav__link">
         
   
   
@@ -403,7 +394,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -693,10 +683,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Fixed-Functions/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fixed-Functions
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -712,6 +729,103 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#vertex-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vertex Input
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Assembly
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-viewport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Viewport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scissors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scissors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-rasterizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Rasterizer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-blending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Color Blending
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -780,6 +894,91 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#vertex-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vertex Input
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-assembly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input Assembly
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-viewport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Viewport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scissors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scissors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-rasterizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Rasterizer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-blending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Color Blending
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -795,10 +994,65 @@
 
 
 
-<h1 id="resource-acquisition-is-initialization">Resource Acquisition Is Initialization</h1>
-<p><strong>Resource Acquisition Is Initialization (RAII)</strong>, is a programming concept where a resource's lifecycle is tied to a local variable's lifetime. The constructor first acquires the resource, then after it is automatically destroyed and the resources are cleaned up.</p>
-<p>In Vulkan, RAII is used very commonly used throughout an application to solve the challenge of manual resource management in such a verbose API in C++. Therefore, we use Vulkan's official RAII bindings.</p>
-<p>Vulkan RAII objects can be retrieved with the <code>vk::raii</code> namespace containing RAII wrapper classes.</p>
+<h1 id="fixed-functions">Fixed-Functions</h1>
+<p>Fixed-functions are non-programmable operations in a <a href="../Pipelines/">pipeline</a> whose behaviour can be pre-configured but are baked into an immutable object. In contrast, <a href="../Dynamic_States/">dynamic states</a> behave similarly to fixed-functions except a limited amount ot the objects' state can be configured during runtime.</p>
+<h2 id="vertex-input">Vertex Input</h2>
+<p>The vertex input (<code>vk::PipelineVertexInputStateCreateInfo</code>) struct specifies the format of the vertex data passed to the vertex shader:</p>
+<ul>
+<li>
+<p><strong>Bindings</strong>: Defines the spacing of data in memory (stride) and whether or not the data should be per-vertex or <a href="https://en.wikipedia.org/wiki/Geometry_instancing">per-instance</a>.</p>
+</li>
+<li>
+<p><strong>Attributes</strong>: Maps attributes in the vertex shader to specific formats and specifies the byte offset within a stride.</p>
+</li>
+</ul>
+<h2 id="input-assembly">Input Assembly</h2>
+<p>The input assembly (vk::PipelineInputAssemblyStateCreateInfo) struct specifies the construction of vertices into primitives. The topology of these primitives can be configured by choosing one fo the following values:</p>
+<ul>
+<li><strong><code>vk::PrimitiveTopology::ePointList</code></strong>: Draws points from vertices.</li>
+<li><strong><code>vk::PrimitiveTopology::eLineList</code></strong>: Draws lines between every two vertices (without reusing vertices).</li>
+<li><strong><code>vk::PrimitiveTopology::eLineStrip</code></strong>: Draws lines where the end vertex of every line is used as the start vertex for the next line.</li>
+<li><strong><code>vk::PrimitiveTopology::eTriangleList</code></strong>: Draws triangles from every three vertices (without reusing vertices).</li>
+<li><strong><code>vk::PrimitiveTopology::eTriangleStrip</code></strong>: Draws triangles where every second and third vertex of every triangle are reused for the next triangle's first two vertices.</li>
+</ul>
+<h2 id="the-viewport">The Viewport</h2>
+<p>The Vulkan viewport descrbies the framebuffer region where the final rendered graphics output is displayed. Note that the viewport can be specified as a <a href="../Dynamic_States/#the-viewport">dynamic state</a>.</p>
+<h2 id="scissors">Scissors</h2>
+<p>The Vulkan scissor is a rectangular region that defines a hard clipping mask for pixels. Any pixel outside of its scissor region is completely discarded by the rasterizer. Note that the scissor can be specified as a <a href="../Dynamic_States/#scissors">dynamic state</a>.</p>
+<h2 id="the-rasterizer">The Rasterizer</h2>
+<p>The rasterizer converts the transformed vertex data passed from the vertex shader to fragments depending on its configurable struct parameters. It also performs any depth testing, culling, or scissor testing. The struct <code>vk::PipelineRasterizationStateCreateInfo</code> include the following configurable parameters:</p>
+<ul>
+<li>
+<p><strong><code>depthClampEnable</code></strong>: Instead of discarding fragments outside the clip planes, they are clamped to the clip planes.</p>
+</li>
+<li>
+<p><strong><code>rasterizerDiscardEnable</code></strong>: Disables output to the framebuffer.</p>
+</li>
+<li>
+<p><strong><code>polygonMode</code></strong></p>
+<ul>
+<li><code>vk::PolygonMode::eFill</code>: Fills primitives formed by vertices with fragments</li>
+<li><code>vk::PolygonMode::eLine</code>: Connects primitive vertices with lines.</li>
+<li><code>vk::PolygonMode::ePoint</code>: Draws vertices as points.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>cullMode</code></strong>: Face culling type (disabled, front-face culling, back-face culling, cull both front and back-faces)</p>
+</li>
+<li>
+<p><strong><code>frontFace</code></strong>: Determines whtether or not the front-face of a primitive includes vertices that in clockwise or counter-clockwise order.</p>
+</li>
+<li>
+<p><strong><code>depthBiasEnable</code></strong>: Allows biasing of depth values.</p>
+</li>
+<li>
+<p><strong><code>lineWidth</code></strong>: Controls the thickness of lines (in units of fragments).</p>
+</li>
+</ul>
+<h2 id="color-blending">Color Blending</h2>
+<p>Color blending is the process of mixing new fragment shader color outputs to the data already stored in the framebuffer.</p>
+<h2 id="references">References</h2>
+<p><a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/02_Fixed_functions.html">https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/02_Fixed_functions.html</a></p>
 
 
 
@@ -828,7 +1082,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../Overview/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+          <a href="../Shaders/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Shaders">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -838,20 +1092,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Overview
+                Shaders
               </div>
             </div>
           </a>
         
         
           
-          <a href="../The_Vulkan_Instance/" class="md-footer__link md-footer__link--next" aria-label="Next: The Vulkan Instance">
+          <a href="../Dynamic_States/" class="md-footer__link md-footer__link--next" aria-label="Next: Dynamic States">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                The Vulkan Instance
+                Dynamic States
               </div>
             </div>
             <div class="md-footer__button md-icon">
