@@ -29,3 +29,5 @@ nav:
     - Vulkan/Fixed-Functions.md
     - Vulkan/Dynamic_States.md
     - Vulkan/Commands.md
+    - Vulkan/Semaphores.md
+    - Vulkan/Fences.md
