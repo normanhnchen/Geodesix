@@ -28,3 +28,4 @@ nav:
     - Vulkan/Shaders.md
     - Vulkan/Fixed-Functions.md
     - Vulkan/Dynamic_States.md
+    - Vulkan/Commands.md
