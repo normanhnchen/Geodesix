@@ -6,4 +6,4 @@ Validation layers can be enabled with Vulkan's SDK `VK_LAYER_KHRONOS_validation`
 
 ## References
 
-https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/02_Validation_layers.html
+[https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/02_Validation_layers.html](https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/02_Validation_layers.html)  

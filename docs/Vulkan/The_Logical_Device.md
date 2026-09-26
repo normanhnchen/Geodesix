@@ -4,5 +4,5 @@ The Vulkan **logical device** is a handle for the physical device that abstracts
 
 ## References
 
-https://docs.vulkan.org/tutorial/latest/01_Overview.html
-https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html
+[https://docs.vulkan.org/tutorial/latest/01_Overview.html](https://docs.vulkan.org/tutorial/latest/01_Overview.html)  
+[https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html](https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html)  

@@ -8,5 +8,5 @@ A queue family represents a set of queues that support a specific set of operati
 
 ## References
 
-https://docs.vulkan.org/tutorial/latest/01_Overview.html
-https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html
+[https://docs.vulkan.org/tutorial/latest/01_Overview.html](https://docs.vulkan.org/tutorial/latest/01_Overview.html)  
+[https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html](https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/04_Logical_device_and_queues.html)  

@@ -4,5 +4,5 @@ The Vulkan instance connects the application to the Vulkan API. Specifically, it
 
 ## References
 
-[https://docs.vulkan.org/tutorial/latest/01_Overview.html](https://docs.vulkan.org/tutorial/latest/01_Overview.html)
+[https://docs.vulkan.org/tutorial/latest/01_Overview.html](https://docs.vulkan.org/tutorial/latest/01_Overview.html)  
 [https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/01_Instance.html](https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/01_Instance.html)
