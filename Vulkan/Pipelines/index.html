@@ -8,26 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/">
+        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/Pipelines/">
       
       
+        <link rel="prev" href="../Image_Views/">
       
-        <link rel="next" href="license/">
+      
+        <link rel="next" href="../Shaders/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Geodesix Documentation</title>
+        <title>Pipelines - Geodesix Documentation</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -46,7 +48,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -64,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#geodesix" class="md-skip">
+        <a href="#pipelines" class="md-skip">
           Skip to content
         </a>
       
@@ -80,7 +82,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Geodesix Documentation" class="md-header__button md-logo" aria-label="Geodesix Documentation" data-md-component="logo">
+    <a href="../.." title="Geodesix Documentation" class="md-header__button md-logo" aria-label="Geodesix Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -100,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Pipelines
             
           </span>
         </div>
@@ -178,7 +180,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Geodesix Documentation" class="md-nav__button md-logo" aria-label="Geodesix Documentation" data-md-component="logo">
+    <a href="../.." title="Geodesix Documentation" class="md-nav__button md-logo" aria-label="Geodesix Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -193,19 +195,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -221,7 +214,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -233,7 +225,7 @@
   
   
     <li class="md-nav__item">
-      <a href="license/" class="md-nav__link">
+      <a href="../../license/" class="md-nav__link">
         
   
   
@@ -257,18 +249,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -289,7 +283,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -304,18 +298,20 @@
                 
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" checked>
         
           
           <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
@@ -336,7 +332,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
             
@@ -354,7 +350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Overview/" class="md-nav__link">
+      <a href="../Overview/" class="md-nav__link">
         
   
   
@@ -382,7 +378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Resource_Acquisition_Is_Initialization/" class="md-nav__link">
+      <a href="../Resource_Acquisition_Is_Initialization/" class="md-nav__link">
         
   
   
@@ -410,7 +406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/The_Vulkan_Instance/" class="md-nav__link">
+      <a href="../The_Vulkan_Instance/" class="md-nav__link">
         
   
   
@@ -438,7 +434,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Validation_Layers/" class="md-nav__link">
+      <a href="../Validation_Layers/" class="md-nav__link">
         
   
   
@@ -466,7 +462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/The_Physical_Device/" class="md-nav__link">
+      <a href="../The_Physical_Device/" class="md-nav__link">
         
   
   
@@ -494,7 +490,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Queues/" class="md-nav__link">
+      <a href="../Queues/" class="md-nav__link">
         
   
   
@@ -522,7 +518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/The_Logical_Device/" class="md-nav__link">
+      <a href="../The_Logical_Device/" class="md-nav__link">
         
   
   
@@ -550,7 +546,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Window_Surface/" class="md-nav__link">
+      <a href="../Window_Surface/" class="md-nav__link">
         
   
   
@@ -578,7 +574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/The_Swap_Chain/" class="md-nav__link">
+      <a href="../The_Swap_Chain/" class="md-nav__link">
         
   
   
@@ -606,7 +602,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Image_Views/" class="md-nav__link">
+      <a href="../Image_Views/" class="md-nav__link">
         
   
   
@@ -631,10 +627,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="Vulkan/Pipelines/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelines
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -650,6 +673,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-graphics-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Graphics Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -662,7 +727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="Vulkan/Shaders/" class="md-nav__link">
+      <a href="../Shaders/" class="md-nav__link">
         
   
   
@@ -718,6 +783,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-graphics-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Graphics Pipeline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -733,7 +828,44 @@
 
 
 
-<h1 id="geodesix">Geodesix</h1>
+<h1 id="pipelines">Pipelines</h1>
+<p>A Vulkan pipeline (<code>VkPipeline</code>) is an immutable object that describes the entire process of how a GPU should convert data to final pixels.</p>
+<h2 id="the-graphics-pipeline">The Graphics Pipeline</h2>
+<p>A standard graphics pipeline is outlined as follows:</p>
+<div style="text-align: center;">
+    <details>
+        <summary><b>Input Assembler</b></summary>
+        <p style="text-align: left;">Collects raw vertex data and assembles them into geometric primitives like points, lines, or triangles.</p>
+    </details>
+    ↓<br>
+    <details>
+        <summary><b>Vertex Shader</b></summary>
+        <p style="text-align: left;">Runs code on each vertex to perform transformations on them.</p>
+    </details>
+    ↓<br>
+    <details>
+        <summary><b>Tessellation (Optional)</b></summary>
+        <p style="text-align: left;">Allows subdivision of geometry.</p>
+    </details>
+    ↓<br>
+    <details> 
+        <summary><b>Rasterization</b></summary>
+        <p style="text-align: left;">Converts geometric primitives to fragments (pixel candidates) overlapping the screen.</p>
+    </details>
+    ↓<br>
+    <details>
+        <summary><b>Fragment Shader</b></summary>
+        <p style="text-align: left;">Runs code on each fragment to calculate the final color, lighting, and textures.</p>
+    </details>
+    ↓<br>
+    <details>
+        <summary><b>Color Blending</b></summary>
+        <p style="text-align: left;">Mixes the final pixel values with the existing data inside the framebuffer (and handling transparency).</p>
+    </details>
+</div>
+
+<h2 id="references">References</h2>
+<p><a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/00_Introduction.html">https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/00_Introduction.html</a>  </p>
 
 
 
@@ -762,15 +894,31 @@
       
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
+          
+          <a href="../Image_Views/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Image Views">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Image Views
+              </div>
+            </div>
+          </a>
+        
         
           
-          <a href="license/" class="md-footer__link md-footer__link--next" aria-label="Next: License">
+          <a href="../Shaders/" class="md-footer__link md-footer__link--next" aria-label="Next: Shaders">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                License
+                Shaders
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -801,10 +949,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": {"navigation.footer": true}, "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": {"navigation.footer": true}, "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

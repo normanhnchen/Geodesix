@@ -11,10 +11,10 @@
         <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/The_Physical_Device/">
       
       
-        <link rel="prev" href="../The_Vulkan_Instance/">
+        <link rel="prev" href="../Validation_Layers/">
       
       
-        <link rel="next" href="../Validation_Layers/">
+        <link rel="next" href="../Queues/">
       
       
         
@@ -431,6 +431,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../Validation_Layers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Validation Layers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -442,6 +470,24 @@
       
         
       
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Physical Device
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -460,6 +506,36 @@
 
       </a>
       
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -472,14 +548,182 @@
   
   
     <li class="md-nav__item">
-      <a href="../Validation_Layers/" class="md-nav__link">
+      <a href="../Queues/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Validation Layers
+    Queues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../The_Logical_Device/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Logical Device
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Window_Surface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Window Surface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../The_Swap_Chain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Swap Chain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Image_Views/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Image Views
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Shaders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shaders
   
 
     
@@ -528,6 +772,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -544,6 +807,10 @@
 
 
 <h1 id="the-physical-device">The Physical Device</h1>
+<p>The Vulkan physical device bridges the gap between the Vulkan API and physical hardware, or GPUs.</p>
+<p>To select a physical device, we test if it is compatible with the Vulkan API, any extensions, <a href="../Queues/#queue-families">queue families</a>, and any other required features or properties. We can also rank GPUs by "score" depending if it is most suitable and most performant for our needs. </p>
+<h2 id="references">References</h2>
+<p><a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/03_Physical_devices_and_queue_families.html">https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/03_Physical_devices_and_queue_families.html</a>  </p>
 
 
 
@@ -573,7 +840,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../The_Vulkan_Instance/" class="md-footer__link md-footer__link--prev" aria-label="Previous: The Vulkan Instance">
+          <a href="../Validation_Layers/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Validation Layers">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -583,20 +850,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                The Vulkan Instance
+                Validation Layers
               </div>
             </div>
           </a>
         
         
           
-          <a href="../Validation_Layers/" class="md-footer__link md-footer__link--next" aria-label="Next: Validation Layers">
+          <a href="../Queues/" class="md-footer__link md-footer__link--next" aria-label="Next: Queues">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Validation Layers
+                Queues
               </div>
             </div>
             <div class="md-footer__button md-icon">

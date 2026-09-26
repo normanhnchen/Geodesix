@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/The_Vulkan_Instance/">
+        <link rel="canonical" href="https://github.com/normanhnchen/Geodesix/Vulkan/The_Swap_Chain/">
       
       
-        <link rel="prev" href="../Resource_Acquisition_Is_Initialization/">
+        <link rel="prev" href="../Window_Surface/">
       
       
-        <link rel="next" href="../Validation_Layers/">
+        <link rel="next" href="../Image_Views/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>The Vulkan Instance - Geodesix Documentation</title>
+        <title>The Swap Chain - Geodesix Documentation</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#the-vulkan-instance" class="md-skip">
+        <a href="#the-swap-chain" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              The Vulkan Instance
+              The Swap Chain
             
           </span>
         </div>
@@ -403,37 +403,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    The Vulkan Instance
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../The_Vulkan_Instance/" class="md-nav__link">
         
   
   
@@ -449,37 +422,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        References
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -629,10 +571,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../The_Swap_Chain/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Swap Chain
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -648,6 +617,137 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presentation-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presentation Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Presentation Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhreimmediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eImmediate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhrefifo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eFifo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhrefiforelaxed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eFifoRelaxed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhremailbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eMailbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-swap-extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Swap Extent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#surface-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Surface Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#color-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Color Spaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -779,6 +879,106 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#presentation-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presentation Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Presentation Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhreimmediate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eImmediate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhrefifo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eFifo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhrefiforelaxed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eFifoRelaxed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vkpresentmodekhremailbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vk::PresentModeKHR::eMailbox
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-swap-extent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Swap Extent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#surface-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Surface Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#color-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Color Spaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#references" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -806,11 +1006,29 @@
 
 
 
-<h1 id="the-vulkan-instance">The Vulkan Instance</h1>
-<p>The Vulkan instance connects the application to the Vulkan API. Specifically, it bridges this gap through initializing any Vulkan drivers, API extensions, application specifications, debug (i.e. <a href="../Validation_Layers/">validation layers</a>) and retrieving data about the <a href="../The_Physical_Device/">physical device</a>.</p>
+<h1 id="the-swap-chain">The Swap Chain</h1>
+<p>Because Vulkan provides no default framebuffer that automatically refreshes, we must explicitly manage, clear, and synchronize our own framebuffer to present something on screen. As such, the Vulkan <strong>swap chain</strong> is used. The Vulkan swap chain is an explicit queue of renderable framebuffers that will be presented to screen while synchronized to the refresh rate of the screen. In other words, it swaps rendered images in its queue to the window surface.</p>
+<h2 id="presentation-modes">Presentation Modes</h2>
+<p>The presentation mode a surface uses describes how images should be swapped to the presentable screen.</p>
+<h3 id="vkpresentmodekhreimmediate"><code>vk::PresentModeKHR::eImmediate</code></h3>
+<p>In this mode, swap chain images are displayed immediately the moment when the GPU finishes a new frame. Because the GPU doesn't necessarily wait for a frame to completely finish, it may result in screen tearing. This mode results in the lowest latency out of all presentation modes.</p>
+<h3 id="vkpresentmodekhrefifo"><code>vk::PresentModeKHR::eFifo</code></h3>
+<p>In this mode (where FIFO means First In, First Out), the swap chain is a queue of images where the screen displays images refreshed from the FIFO queue. When the queue is full, it blocks the application. This mode is also known as <em>vertical sync</em>, or <em>V-Sync</em>, where waiting for the frame to completely finish eliminates screen tearing. This mode results in low latency, although slightly more than <code>vk::PresentModeKHR::eImmediate</code> due to the GPU blocking when the queue is full.</p>
+<h3 id="vkpresentmodekhrefiforelaxed"><code>vk::PresentModeKHR::eFifoRelaxed</code></h3>
+<p>Similarly to <code>vk::PresentModeKHR::eFifo</code>, the swap chain in <code>vk::PresentModeKHR::eFifoRelaxed</code> is a queue of images where image refreshes are blocked until processes are finished. However, if the GPU is late to a frame, that frame is swapped to the window surface immediately. Because it doesn't wait for any screen processes to finish, it may cause visible screen tearing. This mode results in lower latency than <code>vk::PresentModeKHR::eFifo</code> in situations when the GPU lags behind the monitor.</p>
+<h3 id="vkpresentmodekhremailbox"><code>vk::PresentModeKHR::eMailbox</code></h3>
+<p>This mode is another variation of the <code>vk::PresentModeKHR::eFifo</code> except when the queue is full, images already in the queue are replaced with newer frames. Commonly known as <em>triple buffering</em>, this mode usually uses more energy while avoiding screen tearing. It result in lower latency than <code>vk::PresentModeKHR::eFifo</code> because the GPU is never blocked. </p>
+<h2 id="the-swap-extent">The Swap Extent</h2>
+<p>The swap extent, or the resolution of the swap chain images has the exact same dimensions as the resolution of the window surface. Because Vulkan uses pixels by convention, the swap chain image resolutions must also be in pixels.</p>
+<p>For GLFW, we must use <code>glfwGetFramebufferSize</code> to get the exact window resolution <em>in pixels</em>, or otherwise screen coordinates used by GLFW by default will result in a resolution mismatch (in high DPI displays).</p>
+<h2 id="surface-formatting">Surface Formatting</h2>
+<p>The format of a surface defines the displayed color space and its color precision (color depth) or color formatting.</p>
+<h3 id="color-spaces">Color Spaces</h3>
+<p>Common color spaces used for surface formatting include <code>VK_COLOR_SPACE_SRGB_NONLINEAR_KHR</code> or sRGB formats such as <code>VK_FORMAT_B8G8R8A8_SRGB</code> or <code>VK_FORMAT_R8G8B8A8_SRGB</code> with automatic <a href="https://en.wikipedia.org/wiki/Gamma_correction">gamma correction</a>.</p>
+<p>Note: <em>In sRGB formats, it is important to note that the final image before displaying </em><em>must contain linear sRGB values</em><em>!</em></p>
+<p>(More on color spaces can be found in the <a href="https://docs.vulkan.org/spec/latest/chapters/formats.html">official documentation</a>.)</p>
 <h2 id="references">References</h2>
-<p><a href="https://docs.vulkan.org/tutorial/latest/01_Overview.html">https://docs.vulkan.org/tutorial/latest/01_Overview.html</a><br />
-<a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/01_Instance.html">https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/01_Instance.html</a></p>
+<p><a href="https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html">https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/01_Presentation/01_Swap_chain.html</a>  </p>
 
 
 
@@ -840,7 +1058,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../Resource_Acquisition_Is_Initialization/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Resource Acquisition Is Initialization">
+          <a href="../Window_Surface/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Window Surface">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -850,20 +1068,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Resource Acquisition Is Initialization
+                Window Surface
               </div>
             </div>
           </a>
         
         
           
-          <a href="../Validation_Layers/" class="md-footer__link md-footer__link--next" aria-label="Next: Validation Layers">
+          <a href="../Image_Views/" class="md-footer__link md-footer__link--next" aria-label="Next: Image Views">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Validation Layers
+                Image Views
               </div>
             </div>
             <div class="md-footer__button md-icon">
