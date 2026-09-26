@@ -26,3 +26,5 @@ nav:
     - Vulkan/Image_Views.md
     - Vulkan/Pipelines.md
     - Vulkan/Shaders.md
+    - Vulkan/Fixed-Functions.md
+    - Vulkan/Dynamic_States.md
