@@ -146,10 +146,14 @@ void CommandContext::RecordComputeCommandBuffer(uint32_t imageIndex, uint32_t fr
     const vk::raii::Pipeline& computePipeline = m_pipeline.GetComputePipeline();
     const vk::raii::PipelineLayout& computePipelineLayout = m_pipeline.GetComputePipelineLayout();
     const std::vector<vk::raii::DescriptorSet>& computeDescriptorSets = m_bufferContext.GetComputeDescriptorSets();
+    const vk::raii::Image& computeStorageImage = m_bufferContext.GetComputeStorageImage();
+    bool& computeImageInitialized = m_bufferContext.m_computeImageInitialized;
 
-    auto &commandBuffer = m_computeCommandBuffers[frameIndex];
+    auto& commandBuffer = m_computeCommandBuffers[frameIndex];
     commandBuffer.reset();
+
     commandBuffer.begin({});
+
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, computePipeline);
     commandBuffer.bindDescriptorSets(
         vk::PipelineBindPoint::eCompute,
@@ -157,7 +161,52 @@ void CommandContext::RecordComputeCommandBuffer(uint32_t imageIndex, uint32_t fr
         0,
         {computeDescriptorSets[frameIndex]}, {}
     );
+
+    vk::ImageLayout oldLayout = computeImageInitialized
+        ? vk::ImageLayout::eShaderReadOnlyOptimal
+        : vk::ImageLayout::eUndefined;
+    computeImageInitialized = true;
+
+    // Compute storage image: (eUndefined | eShaderReadOnlyOptimal) -> eGeneral
+    vk_util::TransitionImageLayoutGeneric(
+        *computeStorageImage,
+        commandBuffer,
+        oldLayout,
+        vk::ImageLayout::eGeneral,
+        {},
+        vk::AccessFlagBits2::eShaderStorageWrite,
+        vk::PipelineStageFlagBits2::eTopOfPipe,
+        vk::PipelineStageFlagBits2::eComputeShader
+    );
+
+    /* Clear previous image data */
+    vk::ClearColorValue clearColor{
+        std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}
+    };
+    vk::ImageSubresourceRange range{
+        vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1
+    };
+    commandBuffer.clearColorImage(
+        *computeStorageImage,
+        vk::ImageLayout::eGeneral,
+        clearColor,
+        range
+    );
+
     commandBuffer.dispatch(buffer_data::particle::PARTICLE_COUNT / 256, 1, 1);
+
+    // Compute storage image: eGeneral -> eShaderReadOnlyOptimal
+    vk_util::TransitionImageLayoutGeneric(
+        *computeStorageImage,
+        commandBuffer,
+        vk::ImageLayout::eGeneral,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::AccessFlagBits2::eShaderStorageWrite,
+        vk::AccessFlagBits2::eShaderSampledRead,
+        vk::PipelineStageFlagBits2::eComputeShader,
+        vk::PipelineStageFlagBits2::eFragmentShader
+    );
+
     commandBuffer.end();
 }
 

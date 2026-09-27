@@ -43,10 +43,11 @@ namespace vertex {
 
 
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    // {{Position}, {Texture coordinates}}
+    {{-1.0f, -1.0f}, {0.0f, 0.0f}},
+    {{ 1.0f, -1.0f}, {1.0f, 0.0f}},
+    {{ 1.0f,  1.0f}, {1.0f, 1.0f}},
+    {{-1.0f,  1.0f}, {0.0f, 1.0f}}
 };
 
 

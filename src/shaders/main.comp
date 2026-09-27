@@ -22,6 +22,8 @@ layout(std140, binding = 2) buffer ParticleSSBOOut {
    Particle particlesOut[];
 };
 
+layout(binding = 3, rgba32f) uniform writeonly image2D computeStorageImage;
+
 layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 void main() {
@@ -38,5 +40,16 @@ void main() {
     }
     if ((particlesOut[index].position.y <= -1.0) || (particlesOut[index].position.y >= 1.0)) {
         particlesOut[index].velocity.y = -particlesOut[index].velocity.y;
+    }
+
+    ivec2 imageSize = imageSize(computeStorageImage);
+
+    vec2 uv = particlesOut[index].position * 0.5 + 0.5;
+
+    ivec2 pixelCoord = ivec2(uv * vec2(imageSize));
+
+    if (pixelCoord.x >= 0 && pixelCoord.x < imageSize.x &&
+        pixelCoord.y >= 0 && pixelCoord.y < imageSize.y) {
+        imageStore(computeStorageImage, pixelCoord, particlesOut[index].color);
     }
 }

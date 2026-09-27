@@ -60,11 +60,13 @@ void TransitionImageLayout(
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = swapChainImages[imageIndex],
         .subresourceRange = {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1}};
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
     
     vk::DependencyInfo dependency_info = {
         .dependencyFlags = {},
@@ -72,6 +74,45 @@ void TransitionImageLayout(
         .pImageMemoryBarriers = &barrier};
     
     commandBuffers[frameIndex].pipelineBarrier2(dependency_info);
+}
+
+void TransitionImageLayoutGeneric(
+    vk::Image image,
+    const vk::raii::CommandBuffer& commandBuffer,
+    vk::ImageLayout oldLayout,
+    vk::ImageLayout newLayout,
+    vk::AccessFlags2 srcAccessMask,
+    vk::AccessFlags2 dstAccessMask,
+    vk::PipelineStageFlags2 srcStageMask,
+    vk::PipelineStageFlags2 dstStageMask
+) {
+	vk::ImageMemoryBarrier2 barrier = {
+        .srcStageMask = srcStageMask,
+        .srcAccessMask = srcAccessMask,
+        .dstStageMask = dstStageMask,
+        .dstAccessMask = dstAccessMask,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = image,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+        
+    };
+    
+    vk::DependencyInfo dependency_info = {
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+    
+    commandBuffer.pipelineBarrier2(dependency_info);
 }
 
 /**

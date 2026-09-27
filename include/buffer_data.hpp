@@ -3,6 +3,8 @@
 
 #include <array>
 #include <cstddef>
+#include <ctime>
+#include <cmath>
 
 #include "header_inclusions/vulkan.hpp"
 
@@ -13,8 +15,8 @@
  * @see https://docs.vulkan.org/tutorial/latest/04_Vertex_buffers/00_Vertex_input_description.html
  */
 struct Vertex {
-    glm::vec2 pos;
-    glm::vec3 color;
+    glm::vec2 inPos;
+    glm::vec2 inTexCoords;
 
     /**
      * The binding states the index in the array of bindings.
@@ -50,13 +52,13 @@ struct Vertex {
                 .location = 0,
                 .binding = 0,
                 .format = vk::Format::eR32G32Sfloat,
-                .offset = offsetof(Vertex, pos)
+                .offset = offsetof(Vertex, inPos)
             },
             {
                 .location = 1,
                 .binding = 0,
-                .format = vk::Format::eR32G32B32Sfloat,
-                .offset = offsetof(Vertex, color)
+                .format = vk::Format::eR32G32Sfloat,
+                .offset = offsetof(Vertex, inTexCoords)
             }
         }};
     }
@@ -110,7 +112,7 @@ struct Particle {
     glm::vec4 color;
 };
 
-constexpr uint32_t PARTICLE_COUNT = 16384;
+constexpr uint32_t PARTICLE_COUNT = 16384 * 256;
 
 std::vector<Particle> GenerateInitialParticles(uint32_t width, uint32_t height);
 

@@ -39,6 +39,11 @@ public:
     const vk::raii::DescriptorSetLayout& GetComputeDescriptorSetLayout() const;
     const std::vector<vk::raii::DescriptorSet>& GetComputeDescriptorSets() const;
 
+    const vk::raii::Image& GetComputeStorageImage() const;
+    const vk::raii::Sampler& GetComputeStorageImageSampler() const;
+
+    bool m_computeImageInitialized = false;
+
 private:
     VulkanContext& m_vulkanContext;
     CommandContext* m_commandContext = nullptr;
@@ -70,6 +75,11 @@ private:
     vk::raii::DescriptorSetLayout m_computeDescriptorSetLayout = nullptr;
     std::vector<vk::raii::DescriptorSet> m_computeDescriptorSets;
 
+    vk::raii::Image m_computeStorageImage = nullptr;
+    vk::raii::DeviceMemory m_computeStorageImageMemory = nullptr;
+    vk::raii::ImageView m_computeStorageImageView = nullptr;
+    vk::raii::Sampler m_computeStorageImageSampler = nullptr;
+
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(
         vk::DeviceSize size,
         vk::BufferUsageFlags usage,
@@ -96,4 +106,6 @@ private:
 
     void CreateComputeDescriptorSetLayout();
     void CreateComputeDescriptorSets();
+
+    void CreateComputeStorageImage();
 };
