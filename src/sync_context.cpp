@@ -21,21 +21,16 @@ void SyncContext::Init() {
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/02_Rendering_and_presentation.html
  */
 void SyncContext::CreateObjects() {
-    std::vector<vk::Image> swapChainImages = m_swapChain.GetImages();
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
     
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-        m_renderFinishedSemaphores.emplace_back(
-            device,
-            vk::SemaphoreCreateInfo()
-        );
-    }
+    vk::SemaphoreTypeCreateInfo semaphoreType{ 
+        .semaphoreType = vk::SemaphoreType::eTimeline,
+        .initialValue = 0
+    };
+    m_semaphore = vk::raii::Semaphore(device, {.pNext = &semaphoreType});
+    m_timelineValue = 0;
 
     for (size_t i = 0; i < maxFramesInFlight; i++) {
-        m_presentCompleteSemaphores.emplace_back(
-            device,
-            vk::SemaphoreCreateInfo()
-        );
         m_inFlightFences.emplace_back(
             device,
             vk::FenceCreateInfo{
@@ -75,9 +70,13 @@ void SyncContext::ResetFences(uint32_t frameIndex) {
     device.resetFences(*m_inFlightFences[frameIndex]);
 }
 
+const vk::raii::Semaphore& SyncContext::GetSemaphore() const {
+    return m_semaphore;
+}
+
 std::optional<uint32_t> SyncContext::AcquireNextImageIndex(uint32_t frameIndex) {
     auto imageIndexOpt = m_swapChain.AcquireNextImageIndex(
-        m_presentCompleteSemaphores[frameIndex]
+        m_inFlightFences[frameIndex]
     );
 
     if (imageIndexOpt == std::nullopt) {
@@ -90,14 +89,14 @@ std::optional<uint32_t> SyncContext::AcquireNextImageIndex(uint32_t frameIndex) 
     return imageIndex;
 }
 
-const std::vector<vk::raii::Semaphore>& SyncContext::GetPresentCompleteSemaphore() const {
-    return m_presentCompleteSemaphores;
-}
-
-const std::vector<vk::raii::Semaphore>& SyncContext::GetRenderFinishedSemaphores() const {
-    return m_renderFinishedSemaphores;
-}
-
 const std::vector<vk::raii::Fence>& SyncContext::GetInFlightFences() const {
     return m_inFlightFences;
+}
+
+/**
+ * @brief Return the timeline value's reference because it will be mutated in the rendering draw
+ * loop.
+ */
+uint64_t& SyncContext::GetTimelineValue() {
+    return m_timelineValue;
 }

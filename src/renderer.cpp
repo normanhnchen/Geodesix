@@ -45,12 +45,14 @@ void Renderer::DrawFrame() {
     std::vector<vk::Image> swapChainImages = m_swapChain.GetImages();
     vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
-    const std::vector<vk::raii::Semaphore>& presentCompleteSemaphores = m_syncContext.GetPresentCompleteSemaphore();
-    const std::vector<vk::raii::Semaphore>& renderFinishedSemaphores = m_syncContext.GetRenderFinishedSemaphores();
+    const vk::raii::Semaphore& semaphore = m_syncContext.GetSemaphore();
     const std::vector<vk::raii::Fence>& inFlightFences = m_syncContext.GetInFlightFences();
     const std::vector<vk::raii::CommandBuffer>& commandBuffers = m_commandContext.GetCommandBuffers();
+    const std::vector<vk::raii::CommandBuffer>& computeCommandBuffers = m_commandContext.GetComputeCommandBuffers();
+    uint64_t& timelineValue = m_syncContext.GetTimelineValue();
 
     m_syncContext.WaitForFences(m_frameIndex);
+    m_syncContext.ResetFences(m_frameIndex);
 
     auto imageIndexOpt = m_syncContext.AcquireNextImageIndex(m_frameIndex);
 
@@ -61,49 +63,109 @@ void Renderer::DrawFrame() {
 
     uint32_t imageIndex = *imageIndexOpt;
 
+    // Wait for the image acquire before touching the image
+    m_syncContext.WaitForFences(m_frameIndex);
+
     m_bufferContext.UpdateUniformBuffer(m_frameIndex);
+    m_bufferContext.UpdateComputeUniformBuffer(m_frameIndex);
 
-    m_syncContext.ResetFences(m_frameIndex);
+    /* Update timeline semaphore values for this frame */
+    uint64_t computeWaitValue = timelineValue;
+    uint64_t computeSignalValue = ++timelineValue;
+    uint64_t graphicsWaitValue = computeSignalValue;
+    uint64_t graphicsSignalValue = ++timelineValue;
+    {
+        /* Compute Command Buffers */
 
-    m_commandContext.RecordCommandBuffer(imageIndex, m_frameIndex);
+        m_commandContext.RecordComputeCommandBuffer(imageIndex, m_frameIndex);
 
-    vk::PipelineStageFlags waitDestinationStageMask(
-        vk::PipelineStageFlagBits ::eColorAttachmentOutput
-    );
-    const vk::SubmitInfo submitInfo{
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*presentCompleteSemaphores[m_frameIndex],
-        .pWaitDstStageMask = &waitDestinationStageMask,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &*commandBuffers[m_frameIndex],
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &*renderFinishedSemaphores[imageIndex]
-    };
+        vk::TimelineSemaphoreSubmitInfo computeTimelineInfo{
+            .waitSemaphoreValueCount = 1,
+            .pWaitSemaphoreValues = &computeWaitValue,
+            .signalSemaphoreValueCount = 1,
+            .pSignalSemaphoreValues = &computeSignalValue
+        };
 
-    queue.submit(submitInfo, *inFlightFences[m_frameIndex]);
+        vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eComputeShader};
 
-    const vk::PresentInfoKHR presentInfoKHR{
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*renderFinishedSemaphores[imageIndex],
-        .swapchainCount = 1,
-        .pSwapchains = &*swapChain,
-        .pImageIndices = &imageIndex
-    };
+        vk::SubmitInfo computeSubmitInfo{
+            .pNext = &computeTimelineInfo,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &*semaphore,
+            .pWaitDstStageMask = waitStages,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &*computeCommandBuffers[m_frameIndex],
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &*semaphore
+        };
 
-    auto result = queue.presentKHR(presentInfoKHR);
+        queue.submit(computeSubmitInfo, nullptr);
+    }
+    
+    {
+        /* ---- Graphics Command Buffers ---- */
 
-    if (
-        // The swap chain is incompatible with the surface and can no longer be used to render
-        (result == vk::Result::eSuboptimalKHR) ||
-        // The surface properties don't match anymore
-        (result == vk::Result::eErrorOutOfDateKHR) ||
-        m_window.Resized()
-    ) {
-        m_window.ResetResizedFlag();
-        m_swapChain.Recreate();
-    } else {
-        // On any other error besides eSuccess, presentKHR throws an exception
-        assert(result == vk::Result::eSuccess);
+        m_commandContext.RecordCommandBuffer(imageIndex, m_frameIndex);
+    
+        vk::TimelineSemaphoreSubmitInfo graphicsTimelineInfo{
+            .waitSemaphoreValueCount = 1,
+            .pWaitSemaphoreValues = &graphicsWaitValue,
+            .signalSemaphoreValueCount = 1,
+            .pSignalSemaphoreValues = &graphicsSignalValue
+        };
+
+        vk::PipelineStageFlags waitDestinationStageMask(
+            vk::PipelineStageFlagBits ::eColorAttachmentOutput
+        );
+        const vk::SubmitInfo graphicsSubmitInfo{
+            .pNext = &graphicsTimelineInfo,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &*semaphore,
+            .pWaitDstStageMask = &waitDestinationStageMask,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &*commandBuffers[m_frameIndex],
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &*semaphore
+        };
+
+        queue.submit(graphicsSubmitInfo, nullptr);
+    
+        /* Wait for the graphics rendering to finish */
+        vk::SemaphoreWaitInfo waitInfo{
+            .semaphoreCount = 1,
+            .pSemaphores = &*semaphore,
+            .pValues = &graphicsSignalValue
+        };
+        auto result = device.waitSemaphores(waitInfo, UINT64_MAX);
+        if (result != vk::Result::eSuccess) {
+            throw std::runtime_error("Failed to wait for the Vulkan semaphore!");
+        }
+
+
+        const vk::PresentInfoKHR presentInfoKHR{
+            /* No binary semaphore is needed; we are using a timeline semaphore*/
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .swapchainCount = 1,
+            .pSwapchains = &*swapChain,
+            .pImageIndices = &imageIndex
+        };
+
+        result = queue.presentKHR(presentInfoKHR);
+
+        if (
+            // The swap chain is incompatible with the surface and can no longer be used to render
+            (result == vk::Result::eSuboptimalKHR) ||
+            // The surface properties don't match anymore
+            (result == vk::Result::eErrorOutOfDateKHR) ||
+            m_window.Resized()
+        ) {
+            m_window.ResetResizedFlag();
+            m_swapChain.Recreate();
+        } else {
+            // On any other error besides eSuccess, presentKHR throws an exception
+            assert(result == vk::Result::eSuccess);
+        }
     }
 
     // Advance the frame counter

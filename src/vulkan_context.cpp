@@ -343,12 +343,14 @@ bool VulkanContext::IsDeviceSuitable(vk::raii::PhysicalDevice const& physicalDev
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceVulkan11Features,
             vk::PhysicalDeviceVulkan13Features,
-            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+            vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR
         >();
     bool supportsRequiredFeatures = (
         features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
         features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
-        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState
+        features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
+        features.template get<vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR>().timelineSemaphore
     );
 
     // Check if the physical device meets all of the required criteria
@@ -413,7 +415,8 @@ void VulkanContext::CreateLogicalDevice() {
         vk::PhysicalDeviceFeatures2,
         vk::PhysicalDeviceVulkan11Features,
         vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+        vk::PhysicalDeviceTimelineSemaphoreFeaturesKHR
     >
     featureChain = {
         /* Physical device features */
@@ -434,11 +437,15 @@ void VulkanContext::CreateLogicalDevice() {
         /* Vulkan 1.3 feature */
         {
             .synchronization2 = true,
-            .dynamicRendering = true
+            .dynamicRendering = true,
         },
         /* Extended dynamic state features */
         {
             .extendedDynamicState = true
+        },
+        /* Timeline semaphore */
+        {
+            .timelineSemaphore = true
         }
     };
 

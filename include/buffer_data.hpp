@@ -93,6 +93,10 @@ struct UniformBufferObject {
     glm::mat4 proj;
 };
 
+struct ComputeUniformBufferObject {
+    float deltaTime = 1.0f;
+};
+
 
 } // namespace uniform
 
@@ -100,7 +104,20 @@ struct UniformBufferObject {
 namespace particle {
 
 
-} // namespace uniform
+struct Particle {
+    glm::vec2 position;
+    glm::vec2 velocity;
+    glm::vec4 color;
+};
+
+constexpr uint32_t PARTICLE_COUNT = 16384;
+
+std::vector<Particle> GenerateInitialParticles(uint32_t width, uint32_t height);
+
+constexpr std::size_t PARTICLES_BUFFER_SIZE = sizeof(Particle) * PARTICLE_COUNT;
+
+
+} // namespace particle
 
 
 } // namespace buffer_data

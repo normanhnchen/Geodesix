@@ -29,7 +29,6 @@ public:
     );
 
     void Init();
-
     void DrawFrame();
 
 private:

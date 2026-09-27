@@ -26,9 +26,12 @@ public:
     void Init();
 
     void RecordCommandBuffer(uint32_t imageIndex, uint32_t frameIndex);
+    void RecordComputeCommandBuffer(uint32_t imageIndex, uint32_t frameIndex);
 
     const std::vector<vk::raii::CommandBuffer>& GetCommandBuffers() const;
     const vk::raii::CommandPool& GetCommandPool() const;
+
+    const std::vector<vk::raii::CommandBuffer>& GetComputeCommandBuffers() const;
 
 private:
     VulkanContext& m_vulkanContext;
@@ -40,6 +43,10 @@ private:
     vk::raii::CommandPool m_commandPool = nullptr;
     std::vector<vk::raii::CommandBuffer> m_commandBuffers;
 
+    std::vector<vk::raii::CommandBuffer> m_computeCommandBuffers;
+
     void CreateCommandPool();
     void CreateCommandBuffer();
+
+    void CreateComputeCommandBuffers();
 };

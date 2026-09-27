@@ -47,12 +47,12 @@ void SwapChain::Recreate() {
 }
 
 std::optional<uint32_t> SwapChain::AcquireNextImageIndex(
-    const vk::raii::Semaphore& presentCompleteSemaphore
+    const vk::raii::Fence& fence
 ) {
     auto [result, imageIndex] = m_swapChain.acquireNextImage(
         UINT64_MAX, // Timeout
-        *presentCompleteSemaphore,
-        nullptr
+        nullptr,
+        *fence
     );
 
     if (result == vk::Result::eErrorOutOfDateKHR) {

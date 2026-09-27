@@ -56,6 +56,7 @@
 const std::filesystem::path SHADER_SPIRV_DIR = CMAKE_SHADER_SPIRV_DIR;
 const std::string SHADER_MAIN_VERT_PATH = std::string(SHADER_SPIRV_DIR / "main.vert.spv");
 const std::string SHADER_MAIN_FRAG_PATH = std::string(SHADER_SPIRV_DIR / "main.frag.spv");
+const std::string SHADER_MAIN_COMP_PATH = std::string(SHADER_SPIRV_DIR / "main.comp.spv");
 
 /**
  * The entry point is the function where the shader starts executing. In GLSL, there can only be
@@ -76,15 +77,24 @@ Pipeline::Pipeline(
 }
 
 void Pipeline::Init() {
-    Create();
+    CreateGraphicsPipeline();
+    CreateComputePipeline();
 }
 
 const vk::raii::Pipeline& Pipeline::GetGraphicsPipeline() const {
     return m_graphicsPipeline;
 }
 
-const vk::raii::PipelineLayout& Pipeline::GetLayout() const {
+const vk::raii::PipelineLayout& Pipeline::GetGraphicsPipelineLayout() const {
     return m_pipelineLayout;
+}
+
+const vk::raii::Pipeline& Pipeline::GetComputePipeline() const {
+    return m_computePipeline;
+}
+
+const vk::raii::PipelineLayout& Pipeline::GetComputePipelineLayout() const {
+    return m_computePipelineLayout;
 }
 
 /**
@@ -92,7 +102,7 @@ const vk::raii::PipelineLayout& Pipeline::GetLayout() const {
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/02_Graphics_pipeline_basics/00_Introduction.html
  */
-void Pipeline::Create() {
+void Pipeline::CreateGraphicsPipeline() {
     vk::SurfaceFormatKHR swapChainSurfaceFormat = m_swapChain.GetSurfaceFormat();
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
     const vk::raii::DescriptorSetLayout& descriptorSetLayout = m_bufferContext.GetDescriptorSetLayout();
@@ -249,6 +259,30 @@ void Pipeline::Create() {
         nullptr,
         pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>()
     );
+}
+
+void Pipeline::CreateComputePipeline() {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    const vk::raii::DescriptorSetLayout& computeDescriptorSetLayout = m_bufferContext.GetComputeDescriptorSetLayout();
+
+    auto shaderCodeMainComp = vk_util::ReadFile(SHADER_MAIN_COMP_PATH);
+    vk::raii::ShaderModule shaderModule = CreateShaderModule(shaderCodeMainComp);
+
+    vk::PipelineShaderStageCreateInfo computeShaderStageInfo{
+        .stage = vk::ShaderStageFlagBits::eCompute,
+        .module = shaderModule,
+        .pName = SHADER_ENTRY_POINT
+    };
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
+        .setLayoutCount = 1,
+        .pSetLayouts = &*computeDescriptorSetLayout
+    };
+    m_computePipelineLayout = vk::raii::PipelineLayout(device, pipelineLayoutInfo);
+    vk::ComputePipelineCreateInfo pipelineInfo{
+        .stage = computeShaderStageInfo,
+        .layout = *m_computePipelineLayout
+    };
+    m_computePipeline = vk::raii::Pipeline(device, nullptr, pipelineInfo);
 }
 
 /**

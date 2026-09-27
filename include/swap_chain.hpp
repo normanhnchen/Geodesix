@@ -35,9 +35,7 @@ public:
 
     void Recreate();
 
-    std::optional<uint32_t> AcquireNextImageIndex(
-        const vk::raii::Semaphore& presentCompleteSemaphore
-    );
+    std::optional<uint32_t> AcquireNextImageIndex(const vk::raii::Fence& fence);
 
     const vk::raii::SwapchainKHR& GetNative() const;
     std::vector<vk::Image> GetImages();

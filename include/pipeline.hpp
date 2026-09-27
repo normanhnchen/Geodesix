@@ -22,7 +22,10 @@ public:
     void Init();
 
     const vk::raii::Pipeline& GetGraphicsPipeline() const;
-    const vk::raii::PipelineLayout& GetLayout() const;
+    const vk::raii::PipelineLayout& GetGraphicsPipelineLayout() const;
+
+    const vk::raii::Pipeline& GetComputePipeline() const;
+    const vk::raii::PipelineLayout& GetComputePipelineLayout() const;
 
 private:
     VulkanContext& m_vulkanContext;
@@ -32,7 +35,11 @@ private:
     vk::raii::PipelineLayout m_pipelineLayout = nullptr;
     vk::raii::Pipeline m_graphicsPipeline = nullptr;
 
-    void Create();
+    vk::raii::PipelineLayout m_computePipelineLayout = nullptr;
+    vk::raii::Pipeline m_computePipeline = nullptr;
+
+    void CreateGraphicsPipeline();
+    void CreateComputePipeline();
 
     [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(
         const std::vector<char>& code

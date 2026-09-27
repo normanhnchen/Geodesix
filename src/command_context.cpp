@@ -21,6 +21,7 @@ CommandContext::CommandContext(
 void CommandContext::Init() {
     CreateCommandPool();
     CreateCommandBuffer();
+    CreateComputeCommandBuffers();
 }
 
 /**
@@ -33,7 +34,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
     const std::vector<vk::raii::ImageView>& swapChainImageViews = m_swapChain.GetImageViews();
     const vk::raii::Pipeline& graphicsPipeline = m_pipeline.GetGraphicsPipeline();
-    const vk::raii::PipelineLayout& pipelineLayout = m_pipeline.GetLayout();
+    const vk::raii::PipelineLayout& pipelineLayout = m_pipeline.GetGraphicsPipelineLayout();
     const vk::raii::Buffer& vertexBuffer = m_bufferContext.GetVertexBuffer();
     const vk::raii::Buffer& indexBuffer = m_bufferContext.GetIndexBuffer();
     const std::vector<vk::raii::DescriptorSet>& descriptorSets = m_bufferContext.GetDescriptorSets();
@@ -141,12 +142,35 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     commandBuffer.end();
 }
 
+void CommandContext::RecordComputeCommandBuffer(uint32_t imageIndex, uint32_t frameIndex) {
+    const vk::raii::Pipeline& computePipeline = m_pipeline.GetComputePipeline();
+    const vk::raii::PipelineLayout& computePipelineLayout = m_pipeline.GetComputePipelineLayout();
+    const std::vector<vk::raii::DescriptorSet>& computeDescriptorSets = m_bufferContext.GetComputeDescriptorSets();
+
+    auto &commandBuffer = m_computeCommandBuffers[frameIndex];
+    commandBuffer.reset();
+    commandBuffer.begin({});
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, computePipeline);
+    commandBuffer.bindDescriptorSets(
+        vk::PipelineBindPoint::eCompute,
+        computePipelineLayout,
+        0,
+        {computeDescriptorSets[frameIndex]}, {}
+    );
+    commandBuffer.dispatch(buffer_data::particle::PARTICLE_COUNT / 256, 1, 1);
+    commandBuffer.end();
+}
+
 const std::vector<vk::raii::CommandBuffer>& CommandContext::GetCommandBuffers() const {
     return m_commandBuffers;
 }
 
 const vk::raii::CommandPool& CommandContext::GetCommandPool() const {
     return m_commandPool;
+}
+
+const std::vector<vk::raii::CommandBuffer>& CommandContext::GetComputeCommandBuffers() const {
+    return m_computeCommandBuffers;
 }
 
 /**
@@ -191,4 +215,15 @@ void CommandContext::CreateCommandBuffer() {
     };
 
     m_commandBuffers = vk::raii::CommandBuffers(device, allocInfo);
+}
+
+void CommandContext::CreateComputeCommandBuffers() {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    m_computeCommandBuffers.clear();
+    vk::CommandBufferAllocateInfo allocInfo{};
+    allocInfo.commandPool = *m_commandPool;
+    allocInfo.level = vk::CommandBufferLevel::ePrimary;
+    allocInfo.commandBufferCount = m_syncContext.maxFramesInFlight;
+    m_computeCommandBuffers = vk::raii::CommandBuffers(device, allocInfo);
 }

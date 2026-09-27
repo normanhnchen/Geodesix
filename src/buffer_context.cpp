@@ -17,11 +17,13 @@ class CommandContext;
 BufferContext::BufferContext(
     VulkanContext& vulkanContext,
     SyncContext& syncContext,
-    SwapChain& swapChain
+    SwapChain& swapChain,
+    Window& window
 )
     : m_vulkanContext(vulkanContext),
     m_syncContext(syncContext),
-    m_swapChain(swapChain) {
+    m_swapChain(swapChain),
+    m_window(window) {
 }
 
 void BufferContext::Init() {
@@ -31,6 +33,10 @@ void BufferContext::Init() {
     CreateDescriptorSetLayout();
     CreateDescriptorPool();
     CreateDescriptorSets();
+    CreateShaderStorageBuffers();
+    CreateComputeUniformBuffers();
+    CreateComputeDescriptorSetLayout();
+    CreateComputeDescriptorSets();
 }
 
 /**
@@ -67,6 +73,13 @@ void BufferContext::UpdateUniformBuffer(uint32_t frameIndex) {
     memcpy(m_uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
 
+void BufferContext::UpdateComputeUniformBuffer(uint32_t frameIndex) {
+    buffer_data::uniform::ComputeUniformBufferObject ubo{};
+    // NOTE: USE ARBITRARY DELTA TIME
+    ubo.deltaTime = static_cast<float>(0.001) * 2.0f;
+    memcpy(m_computeUniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
+}
+
 /**
  * @brief Copies the CommandContext object internally.
  * 
@@ -90,6 +103,14 @@ const vk::raii::DescriptorSetLayout& BufferContext::GetDescriptorSetLayout() con
 
 const std::vector<vk::raii::DescriptorSet>& BufferContext::GetDescriptorSets() const {
     return m_descriptorSets;
+}
+
+const vk::raii::DescriptorSetLayout& BufferContext::GetComputeDescriptorSetLayout() const {
+    return m_computeDescriptorSetLayout;
+}
+
+const std::vector<vk::raii::DescriptorSet>& BufferContext::GetComputeDescriptorSets() const {
+    return m_computeDescriptorSets;
 }
 
 /**
@@ -233,7 +254,7 @@ void BufferContext::CreateIndexBuffer() {
  */
 void BufferContext::CreateUniformBuffers() {
     for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
-        vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::ComputeUniformBufferObject);
+        vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::UniformBufferObject);
         auto [buffer, bufferMem] = CreateBuffer(
             bufferSize,
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -272,17 +293,24 @@ void BufferContext::CreateDescriptorSetLayout() {
  */
 void BufferContext::CreateDescriptorPool() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    uint32_t maxFramesInFlight = m_syncContext.maxFramesInFlight;
 
-    vk::DescriptorPoolSize poolSize{
-        .type = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = m_syncContext.maxFramesInFlight
+    std::array poolSize{
+        vk::DescriptorPoolSize(
+            vk::DescriptorType::eUniformBuffer,
+            maxFramesInFlight
+        ),
+        vk::DescriptorPoolSize(
+            vk::DescriptorType::eStorageBuffer,
+            maxFramesInFlight * 2
+        )
     };
 
     vk::DescriptorPoolCreateInfo poolInfo{
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
         .maxSets = m_syncContext.maxFramesInFlight,
-        .poolSizeCount = 1,
-        .pPoolSizes = &poolSize
+        .poolSizeCount = poolSize.size(),
+        .pPoolSizes = poolSize.data()
     };
 
     m_descriptorPool = vk::raii::DescriptorPool(device, poolInfo);
@@ -310,7 +338,7 @@ void BufferContext::CreateDescriptorSets() {
         vk::DescriptorBufferInfo bufferInfo{
             .buffer = m_uniformBuffers[i],
             .offset = 0,
-            .range = sizeof(buffer_data::uniform::ComputeUniformBufferObject )
+            .range = sizeof(buffer_data::uniform::UniformBufferObject)
         };
         vk::WriteDescriptorSet descriptorWrite{
             .dstSet = m_descriptorSets[i],
@@ -321,5 +349,169 @@ void BufferContext::CreateDescriptorSets() {
             .pBufferInfo = &bufferInfo
         };
         device.updateDescriptorSets(descriptorWrite, {});
+    }
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
+ */
+void BufferContext::CreateShaderStorageBuffers() {
+    int width; int height;
+    m_window.GetFramebufferSize(&width, &height);
+
+    m_shaderStorageBuffers.clear();
+    m_shaderStorageBuffersMemory.clear();
+
+    vk::DeviceSize bufferSize = buffer_data::particle::PARTICLES_BUFFER_SIZE;
+
+    // Create a staging buffer used to upload data to the gpu
+    auto [stagingBuffer, stagingBufferMemory] = CreateBuffer(
+        bufferSize,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent
+    );
+
+    std::vector<buffer_data::particle::Particle> particles = buffer_data::particle::GenerateInitialParticles(
+        static_cast<uint32_t>(width), static_cast<uint32_t>(height)
+    );
+
+    void* dataStaging = stagingBufferMemory.mapMemory(0, bufferSize);
+    memcpy(dataStaging, particles.data(), (size_t)bufferSize);
+    stagingBufferMemory.unmapMemory();
+
+    // Copy initial particle data to all storage buffers
+    for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
+        auto [shaderStorageBufferTemp, shaderStorageBufferTempMemory] = CreateBuffer(
+            bufferSize,
+            vk::BufferUsageFlagBits::eStorageBuffer |
+            vk::BufferUsageFlagBits::eVertexBuffer |
+            vk::BufferUsageFlagBits::eTransferDst,
+            vk::MemoryPropertyFlagBits::eDeviceLocal
+        );
+        CopyBuffer(stagingBuffer, shaderStorageBufferTemp, bufferSize);
+        m_shaderStorageBuffers.emplace_back(std::move(shaderStorageBufferTemp));
+        m_shaderStorageBuffersMemory.emplace_back(std::move(shaderStorageBufferTempMemory));
+    }
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
+ */
+void BufferContext::CreateComputeUniformBuffers() {
+    for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
+        vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::ComputeUniformBufferObject);
+        auto [buffer, bufferMem] = CreateBuffer(
+            bufferSize,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent
+        );
+        m_computeUniformBuffers.emplace_back(std::move(buffer));
+        m_computeUniformBuffersMemory.emplace_back(std::move(bufferMem));
+        m_computeUniformBuffersMapped.emplace_back(
+            m_computeUniformBuffersMemory.back().mapMemory(0, bufferSize)
+        );
+    }
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
+ */
+void BufferContext::CreateComputeDescriptorSetLayout() {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    std::array layoutBindings{
+        vk::DescriptorSetLayoutBinding(0,
+            vk::DescriptorType::eUniformBuffer,
+            1,
+            vk::ShaderStageFlagBits::eCompute,
+            nullptr
+        ),
+        vk::DescriptorSetLayoutBinding(1,
+            vk::DescriptorType::eStorageBuffer,
+            1,
+            vk::ShaderStageFlagBits::eCompute,
+            nullptr
+        ),
+        vk::DescriptorSetLayoutBinding(2,
+            vk::DescriptorType::eStorageBuffer,
+            1,
+            vk::ShaderStageFlagBits::eCompute,
+            nullptr
+        )
+    };
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{
+        .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
+        .pBindings = layoutBindings.data()
+    };
+    m_computeDescriptorSetLayout = vk::raii::DescriptorSetLayout(device, layoutInfo);
+}
+
+/**
+ * @see https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
+ */
+void BufferContext::CreateComputeDescriptorSets() {
+    uint32_t maxFramesInFlight = m_syncContext.maxFramesInFlight;
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+
+    std::vector<vk::DescriptorSetLayout> layouts(maxFramesInFlight, m_computeDescriptorSetLayout);
+    vk::DescriptorSetAllocateInfo allocInfo{};
+    allocInfo.descriptorPool = *m_descriptorPool;
+    allocInfo.descriptorSetCount = maxFramesInFlight;
+    allocInfo.pSetLayouts = layouts.data();
+    m_computeDescriptorSets.clear();
+    m_computeDescriptorSets = device.allocateDescriptorSets(allocInfo);
+
+    for (size_t i = 0; i < maxFramesInFlight; i++) {
+        vk::DescriptorBufferInfo bufferInfo(
+            m_computeUniformBuffers[i],
+            0,
+            sizeof(buffer_data::uniform::ComputeUniformBufferObject)
+        );
+
+        vk::DescriptorBufferInfo storageBufferInfoLastFrame(
+            m_shaderStorageBuffers[(i - 1) % maxFramesInFlight],
+            0,
+            buffer_data::particle::PARTICLES_BUFFER_SIZE
+        );
+        vk::DescriptorBufferInfo storageBufferInfoCurrentFrame(
+            m_shaderStorageBuffers[i],
+            0,
+            buffer_data::particle::PARTICLES_BUFFER_SIZE
+        );
+        std::array descriptorWrites{
+            vk::WriteDescriptorSet{
+                .dstSet = *m_computeDescriptorSets[i],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .pImageInfo = nullptr,
+                .pBufferInfo = &bufferInfo,
+                .pTexelBufferView = nullptr
+            },
+            vk::WriteDescriptorSet{
+                .dstSet = *m_computeDescriptorSets[i],
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eStorageBuffer,
+                .pImageInfo = nullptr,
+                .pBufferInfo = &storageBufferInfoLastFrame,
+                .pTexelBufferView = nullptr
+            },
+            vk::WriteDescriptorSet{.dstSet = *m_computeDescriptorSets[i],
+                .dstBinding = 2,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eStorageBuffer,
+                .pImageInfo = nullptr,
+                .pBufferInfo = &storageBufferInfoCurrentFrame,
+                .pTexelBufferView = nullptr
+            },
+        };
+        device.updateDescriptorSets(descriptorWrites, {});
     }
 }

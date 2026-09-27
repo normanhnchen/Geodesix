@@ -7,6 +7,7 @@
 #include "buffer_data.hpp"
 #include "sync_context.hpp"
 #include "swap_chain.hpp"
+#include "window.hpp"
 
 
 // Forward declaration
@@ -18,12 +19,14 @@ public:
     BufferContext(
         VulkanContext& vulkanContext,
         SyncContext& syncContext,
-        SwapChain& swapChain
+        SwapChain& swapChain,
+        Window& window
     );
 
     void Init();
 
     void UpdateUniformBuffer(uint32_t frameIndex);
+    void UpdateComputeUniformBuffer(uint32_t frameIndex);
 
     void RetrieveCommandContext(CommandContext& commandContext);
 
@@ -33,11 +36,15 @@ public:
     const vk::raii::DescriptorSetLayout& GetDescriptorSetLayout() const;
     const std::vector<vk::raii::DescriptorSet>& GetDescriptorSets() const;
 
+    const vk::raii::DescriptorSetLayout& GetComputeDescriptorSetLayout() const;
+    const std::vector<vk::raii::DescriptorSet>& GetComputeDescriptorSets() const;
+
 private:
     VulkanContext& m_vulkanContext;
     CommandContext* m_commandContext = nullptr;
     SyncContext& m_syncContext;
     SwapChain& m_swapChain;
+    Window& m_window;
 
     vk::raii::Buffer m_vertexBuffer = nullptr;
     vk::raii::DeviceMemory m_vertexBufferMemory = nullptr;
@@ -82,4 +89,11 @@ private:
     void CreateDescriptorSetLayout();
     void CreateDescriptorPool();
     void CreateDescriptorSets();
+
+    void CreateShaderStorageBuffers();
+
+    void CreateComputeUniformBuffers();
+
+    void CreateComputeDescriptorSetLayout();
+    void CreateComputeDescriptorSets();
 };
