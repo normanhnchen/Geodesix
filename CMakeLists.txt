@@ -13,6 +13,8 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(Imath REQUIRED)
+find_package(OpenEXR REQUIRED)
 
 add_executable(Geodesix
     src/main.cpp
@@ -27,12 +29,15 @@ add_executable(Geodesix
     src/vk_util.cpp
     src/buffer_data.cpp
     src/buffer_context.cpp
+    src/exr_loading.cpp
 )
 
 target_link_libraries(Geodesix PRIVATE
     Vulkan::Vulkan
     glfw
     glm::glm
+    OpenEXR::OpenEXR
+    Imath::Imath
 )
 
 # Locate the glslangValidator (the GLSL -> SPIR-V compiler that comes with the Vulkan SDK)
