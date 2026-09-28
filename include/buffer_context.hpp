@@ -51,6 +51,9 @@ public:
     const vk::raii::Sampler& GetComputeStorageImageSampler() const;
 
     vk::Extent2D GetComputeStorageImageExtent();
+    
+    bool FramebufferResized();
+    void RecreateComputeStorageImage();
 
     bool m_computeImageInitialized = false;
 
@@ -88,6 +91,8 @@ private:
     vk::raii::DeviceMemory m_computeStorageImageMemory = nullptr;
     vk::raii::ImageView m_computeStorageImageView = nullptr;
     vk::raii::Sampler m_computeStorageImageSampler = nullptr;
+
+    vk::Extent2D m_computeStorageImageExtent{};
 
     vk::raii::Image m_envImage = nullptr;
     vk::raii::DeviceMemory m_envImageMemory = nullptr;

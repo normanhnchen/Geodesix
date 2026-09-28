@@ -2,14 +2,16 @@
 
 
 void Camera::Init() {
+    m_pos = glm::vec3(0.0f, 0.0f, 0.0f);
+
     m_yaw = 90.0f;
     m_pitch = 0.0f;
 
     m_worldUp = glm::vec3(0.0f, 0.0f, 1.0f);
-    
+
     UpdateVectors();
 
-    m_fov = 45.0f;
+    m_fov = glm::radians(45.0f);
     
     m_sensitivity = 0.1f;
 }

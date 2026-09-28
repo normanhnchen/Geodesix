@@ -7,9 +7,15 @@
 #include "camera.hpp"
 
 
+// Forward declaration
+// Used because BufferContext and Window circularly depend on each other
+class BufferContext;
+
 class Window {
 public:
     Window(Camera& camera);
+
+    void RetrieveBufferContext(BufferContext& bufferContext);
 
     void SetResolution(int width, int height);
     void SetTitle(const char* title);
@@ -33,6 +39,7 @@ public:
 
 private:
     Camera& m_camera;
+    BufferContext* m_bufferContext = nullptr;
 
     int m_width;
     int m_height;
@@ -42,7 +49,7 @@ private:
     bool m_framebufferResized = false;
 
     double m_lastX = 0.0, m_lastY = 0.0;
-    // Prevent camera snapping on launch
+    // Prevent camera snapping on launch or window resize
     bool m_firstMouse = true;
 
     static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);

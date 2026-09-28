@@ -23,6 +23,7 @@ void Renderer::Init() {
     m_commandContext.Init();
     m_bufferContext.RetrieveCommandContext(m_commandContext);
     m_bufferContext.Init();
+    m_window.RetrieveBufferContext(m_bufferContext);
     m_pipeline.Init();
     m_syncContext.Init();
 }
@@ -56,8 +57,10 @@ void Renderer::DrawFrame() {
 
     auto imageIndexOpt = m_syncContext.AcquireNextImageIndex(m_frameIndex);
 
-    if (imageIndexOpt == std::nullopt) {
+    if (imageIndexOpt == std::nullopt || m_bufferContext.FramebufferResized()) {
         /* The swap chain is incompatible with the surface and can no longer be used to render */
+        m_bufferContext.RecreateComputeStorageImage();
+        // Start a fresh frame
         return;
     }
 

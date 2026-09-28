@@ -1,4 +1,5 @@
 #include "window.hpp"
+#include "buffer_context.hpp"
 
 
 /**
@@ -8,6 +9,10 @@
  */
 Window::Window(Camera& camera)
     : m_camera(camera) {
+}
+
+void Window::RetrieveBufferContext(BufferContext& bufferContext) {
+    m_bufferContext = &bufferContext;
 }
 
 void Window::SetResolution(int width, int height) {
@@ -115,6 +120,8 @@ VkSurfaceKHR Window::CreateVulkanSurface(VkInstance instance) {
 void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
     auto self = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     self->m_framebufferResized = true;
+    self->m_firstMouse = true;
+    self->m_bufferContext->RecreateComputeStorageImage();
 }
 
 void Window::CursorPosCallback(GLFWwindow* window, double xpos, double ypos) {

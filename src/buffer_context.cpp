@@ -46,11 +46,11 @@ void BufferContext::Init() {
  * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
  */
 void BufferContext::UpdateCameraUbo() {
-    m_cameraUbo.pos = glm::vec3(0.0);
+    m_cameraUbo.pos = m_camera.m_pos;
     m_cameraUbo.right = m_camera.m_right;
     m_cameraUbo.up = m_camera.m_up;
     m_cameraUbo.front = m_camera.m_front;
-    m_cameraUbo.fov = glm::radians(45.0f);
+    m_cameraUbo.fov = m_camera.m_fov;
 }
 
 void BufferContext::UpdateParameterUbo(float deltaTime) {
@@ -105,13 +105,46 @@ const vk::raii::Sampler& BufferContext::GetComputeStorageImageSampler() const {
 }
 
 vk::Extent2D BufferContext::GetComputeStorageImageExtent() {
+    return m_computeStorageImageExtent;
+}
+
+bool BufferContext::FramebufferResized() {
     int width; int height;
     m_window.GetFramebufferSize(&width, &height);
+    
+    if (width == 0 || height == 0) {
+        /* Window minimized */
+        return false;
+    }
 
-    return vk::Extent2D(
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)
-    );
+    vk::Extent2D computeStorageImageExtent = GetComputeStorageImageExtent();
+
+    if (
+        width != computeStorageImageExtent.width ||
+        height != computeStorageImageExtent.height
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+void BufferContext::RecreateComputeStorageImage() {
+    // Wait for GPU operations to finish before destroying the objects
+    m_vulkanContext.GetDevice().waitIdle();
+
+    m_computeStorageImageSampler = nullptr;
+    m_computeStorageImageView = nullptr;
+    m_computeStorageImage = nullptr;
+    m_computeStorageImageMemory = nullptr;
+
+    m_graphicsDescriptorSets.clear();
+    m_computeDescriptorSets.clear();
+
+    CreateComputeStorageImage();
+    m_computeImageInitialized = false;
+    CreateGraphicsDescriptorSets();
+    CreateComputeDescriptorSets();
 }
 
 /**
@@ -364,7 +397,7 @@ void BufferContext::CreateComputeUniformBuffers() {
             m_cameraUbosMemory.back().mapMemory(0, cameraUboSize)
         );
 
-        vk::DeviceSize parameterUboSize = sizeof(buffer_data::uniform::CameraUbo);
+        vk::DeviceSize parameterUboSize = sizeof(buffer_data::uniform::ParameterUbo);
         auto [parameterUbo, parameterUboMemory] = CreateBuffer(
             parameterUboSize,
             vk::BufferUsageFlagBits::eUniformBuffer,
@@ -512,6 +545,7 @@ void BufferContext::CreateComputeDescriptorSets() {
 void BufferContext::CreateComputeStorageImage() {
     int width; int height;
     m_window.GetFramebufferSize(&width, &height);
+    m_computeStorageImageExtent = vk::Extent2D(width, height);
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
     const vk::raii::PhysicalDevice& physicalDevice = m_vulkanContext.GetPhysicalDevice();
 

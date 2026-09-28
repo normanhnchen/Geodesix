@@ -10,6 +10,7 @@ public:
 
     void UpdateVectors();
 
+    glm::vec3 m_pos;
     float m_yaw;
     float m_pitch;
     glm::vec3 m_right;
