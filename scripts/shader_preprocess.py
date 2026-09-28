@@ -33,7 +33,7 @@ def preprocess_shader(file_path: Path, visited_paths=[], is_root=True):
 
     visited_paths.append(str(file_path))
 
-    output = ""
+    output = f'#line 1 "{file_path.as_posix()}"\n'
     version = ""
     with open(file_path) as f:
         for line_num, line in enumerate(f, 1):
@@ -51,10 +51,12 @@ def preprocess_shader(file_path: Path, visited_paths=[], is_root=True):
                 output += included
                 if not included.endswith("\n"):
                     output += "\n"
+                output += f'#line {line_num + 1} "{file_path.as_posix()}"\n'
             # The very first line of the shader file must be the version declaration
             elif line.strip().startswith("#version"):
                 if is_root and not version:
                     version = line
+                output += "\n"
             else:
                 output += line
 
@@ -62,7 +64,14 @@ def preprocess_shader(file_path: Path, visited_paths=[], is_root=True):
     visited_paths.pop()
 
     # Include the #version declaration which must be the first line of the file
-    return f"{version}\n{output}"
+    if is_root:
+        return (
+            f"{version}\n"
+            # Add the Google extensions for #line compile error parsing
+            "#extension GL_GOOGLE_cpp_style_line_directive : enable\n"
+            f"{output}"
+        )
+    return output
 
 
 def main():

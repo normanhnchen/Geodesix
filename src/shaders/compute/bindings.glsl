@@ -28,4 +28,5 @@ layout(binding = 2, rgba32f) uniform writeonly image2D computeStorageImage;
 
 layout(binding = 3) uniform sampler2D envMap;
 
+
 #endif
