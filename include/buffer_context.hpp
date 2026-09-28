@@ -31,7 +31,7 @@ public:
     void Init();
 
     void UpdateUniformBuffer(uint32_t frameIndex);
-    void UpdateComputeUniformBuffer(uint32_t frameIndex);
+    void UpdateComputeUniformBuffer(uint32_t frameIndex, float deltaTime);
 
     void RetrieveCommandContext(CommandContext& commandContext);
 
@@ -91,6 +91,8 @@ private:
     vk::raii::DeviceMemory m_envImageMemory = nullptr;
     vk::raii::ImageView m_envImageView = nullptr;
     vk::raii::Sampler m_envImageSampler = nullptr;
+
+    buffer_data::uniform::ComputeUniformBufferObject m_computeUbo{};
 
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(
         vk::DeviceSize size,

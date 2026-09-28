@@ -9,13 +9,72 @@
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 
+vec2 DirToUv(vec3 dir) {
+    float u = atan(dir.z, dir.x) / (2.0 * PI) + 0.5;
+    float v = 0.5 - asin(clamp(dir.y, -1.0, 1.0)) / PI;
+    
+    return vec2(u, v);
+}
+
+vec2 UvToSpherical(vec2 uv) {
+    float phi = (uv.x - 0.5) * (2.0 * PI);
+    float theta = (uv.y - 0.5) * PI;
+
+    return vec2(phi, theta);
+}
+
+vec3 SphericalToDir(float phi, float theta) {
+    float x = cos(theta) * cos(phi);
+    float y = sin(theta);
+    float z = cos(theta) * sin(phi);
+
+    return vec3(x, y, z);
+}
+
+vec3 UvToDir(vec2 uv) {
+    vec2 spherical = UvToSpherical(uv);
+    float phi = spherical.x;
+    float theta = spherical.y;
+
+    vec3 dir = SphericalToDir(phi, theta);
+
+    return dir;
+}
+
+vec3 SampleEquirectangular(sampler2D tex, vec3 dir) {
+    vec2 uv = DirToUv(dir);
+    return textureLod(tex, uv, 0.0).rgb;
+}
+
+CameraRay GenerateCameraRay(ivec2 pixelCoords, ivec2 imageSize) {
+    /* Temporary camera settings */
+    vec3 CAMERA_CENTER = vec3(0.0);
+    float FOV = radians(20.0);
+    float TAN_HALF_FOV = tan(FOV * 0.5);
+
+    // Pixel center -> UV [0,1] -> NDC [-1,1]
+    vec2 uv = (vec2(pixelCoords) + 0.5) / vec2(imageSize);
+    vec2 ndc = uv * 2.0 - 1.0;
+    ndc.y = -ndc.y; // Vulkan's y-axis convention is flipped (downwards is positive)
+    // Account for aspect ratio
+    ndc.x *= float(imageSize.x) / float(imageSize.y);
+
+    vec3 pixelWorldPos = CAMERA_CENTER + vec3(ndc.x * TAN_HALF_FOV, 1.0, ndc.y * TAN_HALF_FOV);
+
+    CameraRay cameraRay;
+    cameraRay.dir = normalize(pixelWorldPos - CAMERA_CENTER);
+
+    return cameraRay;
+}
+
 void main() {
-    /* PLACEHOLDER CODE */
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 imageSize = imageSize(computeStorageImage);
+    if (pixelCoords.x >= imageSize.x || pixelCoords.y >= imageSize.y) return;
 
-    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 size = imageSize(computeStorageImage);
-    if (p.x >= size.x || p.y >= size.y) return;
+    CameraRay cameraRay = GenerateCameraRay(pixelCoords, imageSize);
+    cameraRay.dir = normalize(cameraRay.dir);
+    vec3 envColor = SampleEquirectangular(envMap, cameraRay.dir);
 
-    vec2 uv = (vec2(p) + 0.5) / vec2(size);
-    imageStore(computeStorageImage, p, textureLod(envMap, uv, 0.0));
+    imageStore(computeStorageImage, pixelCoords, vec4(envColor, 1.0));
 }

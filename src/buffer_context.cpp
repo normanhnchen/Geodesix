@@ -75,11 +75,10 @@ void BufferContext::UpdateUniformBuffer(uint32_t frameIndex) {
     memcpy(m_uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
 }
 
-void BufferContext::UpdateComputeUniformBuffer(uint32_t frameIndex) {
-    buffer_data::uniform::ComputeUniformBufferObject ubo{};
-    // NOTE: USE ARBITRARY DELTA TIME
-    ubo.deltaTime = static_cast<float>(10) * 2.0f;
-    memcpy(m_computeUniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
+void BufferContext::UpdateComputeUniformBuffer(uint32_t frameIndex, float deltaTime) {
+    m_computeUbo.deltaTime = deltaTime;
+    m_computeUbo.time += m_computeUbo.deltaTime;
+    memcpy(m_computeUniformBuffersMapped[frameIndex], &m_computeUbo, sizeof(m_computeUbo));
 }
 
 /**

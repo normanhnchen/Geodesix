@@ -67,7 +67,7 @@ void Renderer::DrawFrame() {
     m_syncContext.WaitForFences(m_frameIndex);
 
     m_bufferContext.UpdateUniformBuffer(m_frameIndex);
-    m_bufferContext.UpdateComputeUniformBuffer(m_frameIndex);
+    m_bufferContext.UpdateComputeUniformBuffer(m_frameIndex, 0.1);
 
     /* Update timeline semaphore values for this frame */
     uint64_t computeWaitValue = timelineValue;

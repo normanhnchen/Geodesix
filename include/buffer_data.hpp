@@ -97,6 +97,8 @@ struct UniformBufferObject {
 
 struct ComputeUniformBufferObject {
     float deltaTime = 1.0f;
+    float time = 0.0f;
+    glm::vec2 pad1;
 };
 
 

@@ -4,6 +4,8 @@
 
 layout (binding = 0) uniform ParameterUBO {
     float deltaTime;
+    float time;
+    vec2 pad1;
 } ubo;
 
 layout(binding = 1, rgba32f) uniform writeonly image2D computeStorageImage;
