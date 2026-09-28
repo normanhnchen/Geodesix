@@ -193,7 +193,13 @@ void CommandContext::RecordComputeCommandBuffer(uint32_t imageIndex, uint32_t fr
         range
     );
 
-    commandBuffer.dispatch(buffer_data::particle::PARTICLE_COUNT / 256, 1, 1);
+    constexpr uint32_t LOCAL_SIZE = 16;
+    vk::Extent2D computeStorageImageExtent = m_bufferContext.GetComputeStorageImageExtent();
+    /* Apply ceiling function */
+    uint32_t localGroupsX = (computeStorageImageExtent.width + LOCAL_SIZE - 1) / LOCAL_SIZE;
+    uint32_t localGroupsY = (computeStorageImageExtent.height + LOCAL_SIZE - 1) / LOCAL_SIZE;
+    
+    commandBuffer.dispatch(localGroupsX, localGroupsY, 1);
 
     // Compute storage image: eGeneral -> eShaderReadOnlyOptimal
     vk_util::TransitionImageLayoutGeneric(

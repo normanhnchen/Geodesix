@@ -1,0 +1,5 @@
+#ifndef COMPUTE_STRUCTS_GLSL
+#define COMPUTE_STRUCTS_GLSL
+
+
+#endif

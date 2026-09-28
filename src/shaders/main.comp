@@ -2,54 +2,20 @@
 
 
 #include "src/shaders/constants.glsl"
+#include "src/shaders/compute/structs.glsl"
+#include "src/shaders/compute/bindings.glsl"
 
 
-struct Particle {
-	vec2 position;
-	vec2 velocity;
-    vec4 color;
-};
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-layout (binding = 0) uniform ParameterUBO {
-    float deltaTime;
-} ubo;
-
-layout(std140, binding = 1) readonly buffer ParticleSSBOIn {
-   Particle particlesIn[];
-};
-
-layout(std140, binding = 2) buffer ParticleSSBOOut {
-   Particle particlesOut[];
-};
-
-layout(binding = 3, rgba32f) uniform writeonly image2D computeStorageImage;
-
-layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 void main() {
-    uint index = gl_GlobalInvocationID.x;  
+    /* PLACEHOLDER CODE */
 
-    Particle particleIn = particlesIn[index];
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(computeStorageImage);
+    if (p.x >= size.x || p.y >= size.y) return;
 
-    particlesOut[index].position = particleIn.position + particleIn.velocity.xy * ubo.deltaTime;
-    particlesOut[index].velocity = particleIn.velocity;
-
-    // Flip movement at window border
-    if ((particlesOut[index].position.x <= -1.0) || (particlesOut[index].position.x >= 1.0)) {
-        particlesOut[index].velocity.x = -particlesOut[index].velocity.x;
-    }
-    if ((particlesOut[index].position.y <= -1.0) || (particlesOut[index].position.y >= 1.0)) {
-        particlesOut[index].velocity.y = -particlesOut[index].velocity.y;
-    }
-
-    ivec2 imageSize = imageSize(computeStorageImage);
-
-    vec2 uv = particlesOut[index].position * 0.5 + 0.5;
-
-    ivec2 pixelCoord = ivec2(uv * vec2(imageSize));
-
-    if (pixelCoord.x >= 0 && pixelCoord.x < imageSize.x &&
-        pixelCoord.y >= 0 && pixelCoord.y < imageSize.y) {
-        imageStore(computeStorageImage, pixelCoord, particlesOut[index].color);
-    }
+    vec2 uv = (vec2(p) + 0.5) / vec2(size);
+    imageStore(computeStorageImage, p, textureLod(envMap, uv, 0.0));
 }

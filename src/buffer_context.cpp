@@ -8,6 +8,7 @@
 #include "buffer_data.hpp"
 #include "command_context.hpp"
 #include "vk_util.hpp"
+#include "exr_loading.hpp"
 
 
 // Forward declaration
@@ -30,7 +31,7 @@ void BufferContext::Init() {
     CreateVertexBuffer();
     CreateIndexBuffer();
     CreateUniformBuffers();
-    CreateShaderStorageBuffers();
+    CreateEnvironmentTexture(ENV_PATH);
     CreateComputeStorageImage();
     CreateDescriptorSetLayout();
     CreateDescriptorPool();
@@ -120,6 +121,16 @@ const vk::raii::Image& BufferContext::GetComputeStorageImage() const {
 
 const vk::raii::Sampler& BufferContext::GetComputeStorageImageSampler() const {
     return m_computeStorageImageSampler;
+}
+
+vk::Extent2D BufferContext::GetComputeStorageImageExtent() {
+    int width; int height;
+    m_window.GetFramebufferSize(&width, &height);
+
+    return vk::Extent2D(
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height)
+    );
 }
 
 /**
@@ -322,10 +333,6 @@ void BufferContext::CreateDescriptorPool() {
             maxFramesInFlight * 2
         ),
         vk::DescriptorPoolSize(
-            vk::DescriptorType::eStorageBuffer,
-            maxFramesInFlight * 2
-        ),
-        vk::DescriptorPoolSize(
             vk::DescriptorType::eStorageImage,
             maxFramesInFlight
         ),
@@ -337,7 +344,7 @@ void BufferContext::CreateDescriptorPool() {
 
     vk::DescriptorPoolCreateInfo poolInfo{
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = m_syncContext.maxFramesInFlight,
+        .maxSets = m_syncContext.maxFramesInFlight * 2,
         .poolSizeCount = poolSize.size(),
         .pPoolSizes = poolSize.data()
     };
@@ -401,49 +408,6 @@ void BufferContext::CreateDescriptorSets() {
 /**
  * @see https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
  */
-void BufferContext::CreateShaderStorageBuffers() {
-    int width; int height;
-    m_window.GetFramebufferSize(&width, &height);
-
-    m_shaderStorageBuffers.clear();
-    m_shaderStorageBuffersMemory.clear();
-
-    vk::DeviceSize bufferSize = buffer_data::particle::PARTICLES_BUFFER_SIZE;
-
-    // Create a staging buffer used to upload data to the gpu
-    auto [stagingBuffer, stagingBufferMemory] = CreateBuffer(
-        bufferSize,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-        vk::MemoryPropertyFlagBits::eHostCoherent
-    );
-
-    std::vector<buffer_data::particle::Particle> particles = buffer_data::particle::GenerateInitialParticles(
-        static_cast<uint32_t>(width), static_cast<uint32_t>(height)
-    );
-
-    void* dataStaging = stagingBufferMemory.mapMemory(0, bufferSize);
-    memcpy(dataStaging, particles.data(), (size_t)bufferSize);
-    stagingBufferMemory.unmapMemory();
-
-    // Copy initial particle data to all storage buffers
-    for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
-        auto [shaderStorageBufferTemp, shaderStorageBufferTempMemory] = CreateBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eStorageBuffer |
-            vk::BufferUsageFlagBits::eVertexBuffer |
-            vk::BufferUsageFlagBits::eTransferDst,
-            vk::MemoryPropertyFlagBits::eDeviceLocal
-        );
-        CopyBuffer(stagingBuffer, shaderStorageBufferTemp, bufferSize);
-        m_shaderStorageBuffers.emplace_back(std::move(shaderStorageBufferTemp));
-        m_shaderStorageBuffersMemory.emplace_back(std::move(shaderStorageBufferTempMemory));
-    }
-}
-
-/**
- * @see https://docs.vulkan.org/tutorial/latest/11_Compute_Shader.html
- */
 void BufferContext::CreateComputeUniformBuffers() {
     for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
         vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::ComputeUniformBufferObject);
@@ -477,23 +441,16 @@ void BufferContext::CreateComputeDescriptorSetLayout() {
         ),
         vk::DescriptorSetLayoutBinding(
             1,
-            vk::DescriptorType::eStorageBuffer,
+            vk::DescriptorType::eStorageImage,
             1,
-            vk::ShaderStageFlagBits::eCompute,
+            vk::ShaderStageFlagBits::eCompute, 
             nullptr
         ),
         vk::DescriptorSetLayoutBinding(
             2,
-            vk::DescriptorType::eStorageBuffer,
+            vk::DescriptorType::eCombinedImageSampler,
             1,
             vk::ShaderStageFlagBits::eCompute,
-            nullptr
-        ),
-        vk::DescriptorSetLayoutBinding(
-            3,
-            vk::DescriptorType::eStorageImage,
-            1,
-            vk::ShaderStageFlagBits::eCompute, 
             nullptr
         )
     };
@@ -527,19 +484,14 @@ void BufferContext::CreateComputeDescriptorSets() {
             sizeof(buffer_data::uniform::ComputeUniformBufferObject)
         );
 
-        vk::DescriptorBufferInfo storageBufferInfoLastFrame(
-            m_shaderStorageBuffers[(i - 1) % maxFramesInFlight],
-            0,
-            buffer_data::particle::PARTICLES_BUFFER_SIZE
-        );
-        vk::DescriptorBufferInfo storageBufferInfoCurrentFrame(
-            m_shaderStorageBuffers[i],
-            0,
-            buffer_data::particle::PARTICLES_BUFFER_SIZE
-        );
         vk::DescriptorImageInfo storageImageInfo{
             .imageView = *m_computeStorageImageView,
             .imageLayout = vk::ImageLayout::eGeneral
+        };
+        vk::DescriptorImageInfo envInfo{
+            .sampler = *m_envImageSampler,
+            .imageView = *m_envImageView,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
         };
 
         std::array descriptorWrites{
@@ -558,29 +510,18 @@ void BufferContext::CreateComputeDescriptorSets() {
                 .dstBinding = 1,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eStorageBuffer,
-                .pImageInfo = nullptr,
-                .pBufferInfo = &storageBufferInfoLastFrame,
-                .pTexelBufferView = nullptr
-            },
-            vk::WriteDescriptorSet{.dstSet = *m_computeDescriptorSets[i],
-                .dstBinding = 2,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eStorageBuffer,
-                .pImageInfo = nullptr,
-                .pBufferInfo = &storageBufferInfoCurrentFrame,
-                .pTexelBufferView = nullptr
-            },
-            vk::WriteDescriptorSet{
-                .dstSet = *m_computeDescriptorSets[i],
-                .dstBinding = 3,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
                 .descriptorType = vk::DescriptorType::eStorageImage,
                 .pImageInfo = &storageImageInfo,
                 .pBufferInfo = nullptr,
                 .pTexelBufferView = nullptr
+            },
+            vk::WriteDescriptorSet{
+                .dstSet = *m_computeDescriptorSets[i],
+                .dstBinding = 2,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .pImageInfo = &envInfo
             }
         };
         device.updateDescriptorSets(descriptorWrites, {});
@@ -642,7 +583,6 @@ void BufferContext::CreateComputeStorageImage() {
     };
     m_computeStorageImageView = vk::raii::ImageView(device, viewInfo);
 
-    vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
     vk::SamplerCreateInfo samplerInfo{
         .magFilter = vk::Filter::eLinear,
         .minFilter = vk::Filter::eLinear,
@@ -654,4 +594,147 @@ void BufferContext::CreateComputeStorageImage() {
     };
 
     m_computeStorageImageSampler = vk::raii::Sampler(device, samplerInfo);
+}
+
+void BufferContext::CreateEnvironmentTexture(const std::string& filePath) {
+    const vk::raii::Device& device = m_vulkanContext.GetDevice();
+    const vk::raii::PhysicalDevice& physicalDevice = m_vulkanContext.GetPhysicalDevice();
+    const vk::raii::CommandPool& commandPool = m_commandContext->GetCommandPool();
+    const vk::raii::Queue& queue = m_vulkanContext.GetQueue();
+
+    ExrImage envExrImage = LoadExr(filePath);
+
+    /* Staging buffer */
+    auto [stagingBuffer, stagingMemory] = CreateBuffer(
+        envExrImage.imageSize,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+        vk::MemoryPropertyFlagBits::eHostCoherent
+    );
+    void* mapped = stagingMemory.mapMemory(0, envExrImage.imageSize);
+    memcpy(mapped, envExrImage.pixelData.data(), envExrImage.imageSize);
+    stagingMemory.unmapMemory();
+
+    vk::ImageCreateInfo imageInfo{
+        .imageType = vk::ImageType::e2D,
+        // High precision color format to prevent color compression and color banding
+        .format = vk::Format::eR32G32B32A32Sfloat,
+        .extent = {
+            envExrImage.width,
+            envExrImage.height,
+            1
+        },
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = vk::SampleCountFlagBits::e1,
+        .tiling = vk::ImageTiling::eOptimal,
+        .usage = vk::ImageUsageFlagBits::eSampled |
+            vk::ImageUsageFlagBits::eTransferDst,
+        .sharingMode = vk::SharingMode::eExclusive,
+        .initialLayout = vk::ImageLayout::eUndefined
+    };
+
+    m_envImage = vk::raii::Image(device, imageInfo);
+
+    vk::MemoryRequirements memRequirements = m_envImage.getMemoryRequirements();
+    vk::MemoryAllocateInfo allocInfo{
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = vk_util::FindMemoryType(
+            memRequirements.memoryTypeBits,
+            vk::MemoryPropertyFlagBits::eDeviceLocal,
+            physicalDevice
+        )
+    };
+    m_envImageMemory = vk::raii::DeviceMemory(device, allocInfo);
+    m_envImage.bindMemory(m_envImageMemory, 0);
+
+    vk::ImageViewCreateInfo viewInfo{
+        .image = *m_envImage,
+        .viewType = vk::ImageViewType::e2D,
+        // Must match the image's format exactly since the image object has an immutable format
+        .format = vk::Format::eR32G32B32A32Sfloat,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+    m_envImageView = vk::raii::ImageView(device, viewInfo);
+
+    vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
+    vk::SamplerCreateInfo samplerInfo{
+        .magFilter = vk::Filter::eLinear,
+        .minFilter = vk::Filter::eLinear,
+        .mipmapMode = vk::SamplerMipmapMode::eLinear,
+        .addressModeU = vk::SamplerAddressMode::eClampToEdge,
+        .addressModeV = vk::SamplerAddressMode::eClampToEdge,
+        .addressModeW = vk::SamplerAddressMode::eClampToEdge,
+        .anisotropyEnable = vk::False,
+        // .maxAnisotropy = physicalDeviceProperties.limits.maxSamplerAnisotropy
+    };
+
+    m_envImageSampler = vk::raii::Sampler(device, samplerInfo);
+
+    vk::CommandBufferAllocateInfo cmdInfo{
+        .commandPool = commandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = 1
+    };
+    vk::raii::CommandBuffer commandBuffer = std::move(device.allocateCommandBuffers(cmdInfo).front());
+    commandBuffer.begin({
+        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+    });
+
+    vk_util::TransitionImageLayoutGeneric(
+        *m_envImage,
+        commandBuffer,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eTransferDstOptimal,
+        {},
+        vk::AccessFlagBits2::eTransferWrite,
+        vk::PipelineStageFlagBits2::eTopOfPipe,
+        vk::PipelineStageFlagBits2::eAllTransfer
+    );
+
+    vk::BufferImageCopy region{
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        },
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {envExrImage.width, envExrImage.height, 1}
+    };
+    commandBuffer.copyBufferToImage(
+        *stagingBuffer,
+        *m_envImage,
+        vk::ImageLayout::eTransferDstOptimal,
+        region
+    );
+
+    vk_util::TransitionImageLayoutGeneric(
+        *m_envImage,
+        commandBuffer,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::AccessFlagBits2::eTransferWrite,
+        vk::AccessFlagBits2::eShaderSampledRead,
+        vk::PipelineStageFlagBits2::eAllTransfer,
+        vk::PipelineStageFlagBits2::eComputeShader
+    );
+
+    commandBuffer.end();
+
+    queue.submit(vk::SubmitInfo{
+        .commandBufferCount = 1,
+        .pCommandBuffers = &*commandBuffer
+    }, nullptr);
+    // Wait until the info is submitted
+    queue.waitIdle();
 }

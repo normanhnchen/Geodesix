@@ -32,6 +32,7 @@ ExrImage LoadExr(const std::string& filePath) {
         file.readPixels(dw.min.y, dw.max.y);
         
         img.pixelData.resize(img.width * img.height);
+        img.imageSize = img.pixelData.size() * sizeof(glm::vec4); // 16 bytes per pixel
 
         for (size_t i = 0; i < tempPixels.size(); ++i) {
             /* Cast from 16-bit half-floats to 32-bit floats */

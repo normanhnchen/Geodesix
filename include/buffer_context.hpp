@@ -1,6 +1,8 @@
 #pragma once
 
 
+#include <filesystem>
+
 #include "header_inclusions/vulkan.hpp"
 
 #include "vulkan_context.hpp"
@@ -9,6 +11,9 @@
 #include "swap_chain.hpp"
 #include "window.hpp"
 
+
+const std::filesystem::path ASSETS_DIR = CMAKE_ASSETS_DIR;
+const std::string ENV_PATH = std::string(ASSETS_DIR / "starmap_4k.exr");
 
 // Forward declaration
 // Used because BufferContext and CommandContext circularly depend on eachother
@@ -41,6 +46,8 @@ public:
 
     const vk::raii::Image& GetComputeStorageImage() const;
     const vk::raii::Sampler& GetComputeStorageImageSampler() const;
+
+    vk::Extent2D GetComputeStorageImageExtent();
 
     bool m_computeImageInitialized = false;
 
@@ -80,6 +87,11 @@ private:
     vk::raii::ImageView m_computeStorageImageView = nullptr;
     vk::raii::Sampler m_computeStorageImageSampler = nullptr;
 
+    vk::raii::Image m_envImage = nullptr;
+    vk::raii::DeviceMemory m_envImageMemory = nullptr;
+    vk::raii::ImageView m_envImageView = nullptr;
+    vk::raii::Sampler m_envImageSampler = nullptr;
+
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(
         vk::DeviceSize size,
         vk::BufferUsageFlags usage,
@@ -100,12 +112,11 @@ private:
     void CreateDescriptorPool();
     void CreateDescriptorSets();
 
-    void CreateShaderStorageBuffers();
-
     void CreateComputeUniformBuffers();
 
     void CreateComputeDescriptorSetLayout();
     void CreateComputeDescriptorSets();
 
     void CreateComputeStorageImage();
+    void CreateEnvironmentTexture(const std::string& filePath);
 };
