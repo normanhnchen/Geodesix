@@ -89,15 +89,17 @@ extern const std::vector<uint16_t> indices;
 namespace uniform {
 
 
-struct alignas(16) CameraUbo {
-    glm::vec3 pos;
+struct CameraUbo {
+    alignas(16) glm::vec3 pos;
+    alignas(16) glm::vec3 right;
+    alignas(16) glm::vec3 up;
+    alignas(16) glm::vec3 front;
     float fov;
 };
 
 struct ParameterUbo {
     float deltaTime = 1.0f;
     float time = 0.0f;
-    alignas(8) glm::vec2 pad1;
 };
 
 

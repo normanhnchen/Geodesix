@@ -14,12 +14,19 @@
 #include "application.hpp"
 
 
+/* Window dimensions */
+constexpr uint32_t WIDTH  = 800;
+constexpr uint32_t HEIGHT = 600;
+
 /**
  * @brief Runs the application.
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
  */
 void Application::Run() {
+    m_camera.Init();
+    m_window.SetResolution(WIDTH, HEIGHT);
+    m_window.SetTitle("Geodesix");
     m_window.Init();
     InitVulkan();
     MainLoop();

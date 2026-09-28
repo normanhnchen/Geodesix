@@ -6,8 +6,17 @@
  * 
  * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/00_Setup/00_Base_code.html
  */
-Window::Window(int width, int height, const char* title)
-    : m_width(width), m_height(height), m_title(title) {
+Window::Window(Camera& camera)
+    : m_camera(camera) {
+}
+
+void Window::SetResolution(int width, int height) {
+    m_width = width;
+    m_height = height;
+}
+
+void Window::SetTitle(const char* title) {
+    m_title = title;
 }
 
 /**
@@ -28,7 +37,10 @@ void Window::Init() {
     // member variables
     glfwSetWindowUserPointer(m_window, this);
 
+    glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+    glfwSetCursorPosCallback(m_window, CursorPosCallback);
 }
 
 void Window::Cleanup() {
@@ -79,16 +91,6 @@ void Window::MinimizedLoop() {
 }
 
 /**
- * @brief Callback function for resizing the GLFW framebuffer.
- * 
- * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
- */
-void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-    app->m_framebufferResized = true;
-}
-
-/**
  * @brief Creates the Vulkan window surface.
  * 
  * The window surface allows Vulkan rendering to an OS window because the Vulkan API is platform-
@@ -103,4 +105,39 @@ VkSurfaceKHR Window::CreateVulkanSurface(VkInstance instance) {
     }
 
     return surface;
+}
+
+/**
+ * @brief Callback function for resizing the GLFW framebuffer.
+ * 
+ * @see https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/04_Swap_chain_recreation.html
+ */
+void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    auto self = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    self->m_framebufferResized = true;
+}
+
+void Window::CursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+    auto self = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    self->ProcessMouseMovement(xpos, ypos);
+}
+
+void Window::ProcessMouseMovement(double xpos, double ypos) {
+    if (m_firstMouse) {
+        m_lastX = xpos;
+        m_lastY = ypos;
+        m_firstMouse = false;
+    }
+
+    double dx = xpos - m_lastX;
+    // Reversed; Vulkan window y dimension grows downwards
+    double dy = m_lastY - ypos;
+    m_lastX = xpos;
+    m_lastY = ypos;
+
+    m_camera.m_yaw += static_cast<float>(dx) * m_camera.m_sensitivity;
+    m_camera.m_pitch += static_cast<float>(dy) * m_camera.m_sensitivity;
+    m_camera.m_pitch = glm::clamp(m_camera.m_pitch, -89.99f, 89.99f);
+
+    m_camera.UpdateVectors();
 }

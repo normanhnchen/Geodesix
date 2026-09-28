@@ -10,23 +10,23 @@ layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 
 vec2 DirToUv(vec3 dir) {
-    float u = atan(dir.z, dir.x) / (2.0 * PI) + 0.5;
-    float v = 0.5 - asin(clamp(dir.y, -1.0, 1.0)) / PI;
+    float u = atan(dir.y, dir.x) / (2.0 * PI) + 0.5;
+    float v = 0.5 - asin(clamp(dir.z, -1.0, 1.0)) / PI;
     
     return vec2(u, v);
 }
 
 vec2 UvToSpherical(vec2 uv) {
     float phi = (uv.x - 0.5) * (2.0 * PI);
-    float theta = (uv.y - 0.5) * PI;
+    float theta = (0.5 - uv.y) * PI;
 
     return vec2(phi, theta);
 }
 
 vec3 SphericalToDir(float phi, float theta) {
     float x = cos(theta) * cos(phi);
-    float y = sin(theta);
-    float z = cos(theta) * sin(phi);
+    float y = cos(theta) * sin(phi);
+    float z = sin(theta);
 
     return vec3(x, y, z);
 }
@@ -56,10 +56,12 @@ CameraRay GenerateCameraRay(ivec2 pixelCoords, ivec2 imageSize) {
     // Account for aspect ratio
     ndc.x *= float(imageSize.x) / float(imageSize.y);
 
-    vec3 pixelWorldPos = camera.pos + vec3(ndc.x * tanHalfFov, 1.0, ndc.y * tanHalfFov);
-
     CameraRay cameraRay;
-    cameraRay.dir = normalize(pixelWorldPos - camera.pos);
+    cameraRay.dir = normalize(
+        camera.front +
+        camera.right * (ndc.x * tanHalfFov) +
+        camera.up * (ndc.y * tanHalfFov)
+    );
 
     return cameraRay;
 }

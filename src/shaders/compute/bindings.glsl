@@ -13,13 +13,15 @@
 
 layout(binding = 0) uniform CameraUbo {
     vec3 pos;
+    vec3 right;
+    vec3 up;
+    vec3 front;
     float fov;
 } camera;
 
 layout(binding = 1) uniform ParameterUBO {
     float deltaTime;
     float time;
-    vec2 pad1;
 } parameters;
 
 layout(binding = 2, rgba32f) uniform writeonly image2D computeStorageImage;

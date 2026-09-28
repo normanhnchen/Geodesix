@@ -19,12 +19,14 @@ BufferContext::BufferContext(
     VulkanContext& vulkanContext,
     SyncContext& syncContext,
     SwapChain& swapChain,
-    Window& window
+    Window& window,
+    Camera& camera
 )
     : m_vulkanContext(vulkanContext),
     m_syncContext(syncContext),
     m_swapChain(swapChain),
-    m_window(window) {
+    m_window(window),
+    m_camera(camera) {
 }
 
 void BufferContext::Init() {
@@ -45,6 +47,9 @@ void BufferContext::Init() {
  */
 void BufferContext::UpdateCameraUbo() {
     m_cameraUbo.pos = glm::vec3(0.0);
+    m_cameraUbo.right = m_camera.m_right;
+    m_cameraUbo.up = m_camera.m_up;
+    m_cameraUbo.front = m_camera.m_front;
     m_cameraUbo.fov = glm::radians(45.0f);
 }
 

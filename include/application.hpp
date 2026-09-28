@@ -19,11 +19,8 @@
 #include "sync_context.hpp"
 #include "buffer_context.hpp"
 #include "renderer.hpp"
+#include "camera.hpp"
 
-
-/* Window dimensions */
-constexpr uint32_t WIDTH  = 800;
-constexpr uint32_t HEIGHT = 600;
 
 /**
  * The main application, including a Vulkan & GLFW backend.
@@ -35,11 +32,12 @@ public:
     void Run();
 
 private:
-    Window m_window {WIDTH, HEIGHT, "Geodesix"};
+    Camera m_camera {};
+    Window m_window {m_camera};
     VulkanContext m_vulkanContext {m_window};
     SwapChain m_swapChain {m_window, m_vulkanContext};
     SyncContext m_syncContext {m_vulkanContext, m_swapChain};
-    BufferContext m_bufferContext {m_vulkanContext, m_syncContext, m_swapChain, m_window};
+    BufferContext m_bufferContext {m_vulkanContext, m_syncContext, m_swapChain, m_window, m_camera};
     Pipeline m_pipeline {m_vulkanContext, m_swapChain, m_bufferContext};
     CommandContext m_commandContext {m_vulkanContext, m_swapChain, m_pipeline, m_syncContext, m_bufferContext};
     Renderer m_renderer {

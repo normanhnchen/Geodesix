@@ -10,6 +10,7 @@
 #include "sync_context.hpp"
 #include "swap_chain.hpp"
 #include "window.hpp"
+#include "camera.hpp"
 
 
 const std::filesystem::path ASSETS_DIR = CMAKE_ASSETS_DIR;
@@ -25,7 +26,8 @@ public:
         VulkanContext& vulkanContext,
         SyncContext& syncContext,
         SwapChain& swapChain,
-        Window& window
+        Window& window,
+        Camera& camera
     );
 
     void Init();
@@ -58,17 +60,18 @@ private:
     SyncContext& m_syncContext;
     SwapChain& m_swapChain;
     Window& m_window;
+    Camera& m_camera;
 
     vk::raii::Buffer m_vertexBuffer = nullptr;
     vk::raii::DeviceMemory m_vertexBufferMemory = nullptr;
 
     vk::raii::Buffer m_indexBuffer = nullptr;
     vk::raii::DeviceMemory m_indexBufferMemory = nullptr;
+    
+    vk::raii::DescriptorPool m_descriptorPool = nullptr;
 
     vk::raii::DescriptorSetLayout m_graphicsDescriptorSetLayout = nullptr;
     std::vector<vk::raii::DescriptorSet> m_graphicsDescriptorSets;
-    
-    vk::raii::DescriptorPool m_descriptorPool = nullptr;
 
     std::vector<vk::raii::Buffer> m_cameraUbos;
     std::vector<vk::raii::DeviceMemory> m_cameraUbosMemory;

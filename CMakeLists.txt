@@ -30,6 +30,7 @@ add_executable(Geodesix
     src/buffer_data.cpp
     src/buffer_context.cpp
     src/exr_loading.cpp
+    src/camera.cpp
 )
 
 target_link_libraries(Geodesix PRIVATE
