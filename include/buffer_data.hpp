@@ -89,39 +89,19 @@ extern const std::vector<uint16_t> indices;
 namespace uniform {
 
 
-struct UniformBufferObject {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+struct alignas(16) CameraUbo {
+    glm::vec3 pos;
+    float fov;
 };
 
-struct ComputeUniformBufferObject {
+struct ParameterUbo {
     float deltaTime = 1.0f;
     float time = 0.0f;
-    glm::vec2 pad1;
+    alignas(8) glm::vec2 pad1;
 };
 
 
 } // namespace uniform
-
-
-namespace particle {
-
-
-struct Particle {
-    glm::vec2 position;
-    glm::vec2 velocity;
-    glm::vec4 color;
-};
-
-constexpr uint32_t PARTICLE_COUNT = 16384 * 256;
-
-std::vector<Particle> GenerateInitialParticles(uint32_t width, uint32_t height);
-
-constexpr std::size_t PARTICLES_BUFFER_SIZE = sizeof(Particle) * PARTICLE_COUNT;
-
-
-} // namespace particle
 
 
 } // namespace buffer_data

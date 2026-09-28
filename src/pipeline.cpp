@@ -47,7 +47,7 @@ const vk::raii::PipelineLayout& Pipeline::GetComputePipelineLayout() const {
 void Pipeline::CreateGraphicsPipeline() {
     vk::SurfaceFormatKHR swapChainSurfaceFormat = m_swapChain.GetSurfaceFormat();
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
-    const vk::raii::DescriptorSetLayout& descriptorSetLayout = m_bufferContext.GetDescriptorSetLayout();
+    const vk::raii::DescriptorSetLayout& graphicsDescriptorSetLayout = m_bufferContext.GetGraphicsDescriptorSetLayout();
 
     auto shaderCodeMainVert = vk_util::ReadFile(SHADER_MAIN_VERT_PATH);
     auto shaderCodeMainFrag = vk_util::ReadFile(SHADER_MAIN_FRAG_PATH);
@@ -163,7 +163,7 @@ void Pipeline::CreateGraphicsPipeline() {
 
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
         .setLayoutCount = 1,
-        .pSetLayouts = &*descriptorSetLayout,
+        .pSetLayouts = &*graphicsDescriptorSetLayout,
         .pushConstantRangeCount = 0
     };
 

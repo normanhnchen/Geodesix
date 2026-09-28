@@ -66,14 +66,16 @@ void Renderer::DrawFrame() {
     // Wait for the image acquire before touching the image
     m_syncContext.WaitForFences(m_frameIndex);
 
-    m_bufferContext.UpdateUniformBuffer(m_frameIndex);
-    m_bufferContext.UpdateComputeUniformBuffer(m_frameIndex, 0.1);
+    m_bufferContext.UpdateCameraUbo();
+    m_bufferContext.UpdateParameterUbo(0.1);
+    m_bufferContext.MapComputeUboMemory(m_frameIndex);
 
     /* Update timeline semaphore values for this frame */
     uint64_t computeWaitValue = timelineValue;
     uint64_t computeSignalValue = ++timelineValue;
     uint64_t graphicsWaitValue = computeSignalValue;
     uint64_t graphicsSignalValue = ++timelineValue;
+
     {
         /* Compute Command Buffers */
 

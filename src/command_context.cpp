@@ -37,7 +37,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
     const vk::raii::PipelineLayout& pipelineLayout = m_pipeline.GetGraphicsPipelineLayout();
     const vk::raii::Buffer& vertexBuffer = m_bufferContext.GetVertexBuffer();
     const vk::raii::Buffer& indexBuffer = m_bufferContext.GetIndexBuffer();
-    const std::vector<vk::raii::DescriptorSet>& descriptorSets = m_bufferContext.GetDescriptorSets();
+    const std::vector<vk::raii::DescriptorSet>& graphicsDescriptorSets = m_bufferContext.GetGraphicsDescriptorSets();
 
     auto &commandBuffer = m_commandBuffers[frameIndex];
     commandBuffer.begin({});
@@ -114,7 +114,7 @@ void CommandContext::RecordCommandBuffer(uint32_t imageIndex, uint32_t frameInde
         vk::PipelineBindPoint::eGraphics,
         pipelineLayout,
         0,
-        *descriptorSets[frameIndex],
+        *graphicsDescriptorSets[frameIndex],
         nullptr
     );
     

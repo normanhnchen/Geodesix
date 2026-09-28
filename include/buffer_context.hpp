@@ -30,16 +30,17 @@ public:
 
     void Init();
 
-    void UpdateUniformBuffer(uint32_t frameIndex);
-    void UpdateComputeUniformBuffer(uint32_t frameIndex, float deltaTime);
+    void UpdateCameraUbo();
+    void UpdateParameterUbo(float deltaTime);
+    void MapComputeUboMemory(uint32_t frameIndex);
 
     void RetrieveCommandContext(CommandContext& commandContext);
 
     const vk::raii::Buffer& GetVertexBuffer() const;
     const vk::raii::Buffer& GetIndexBuffer() const;
 
-    const vk::raii::DescriptorSetLayout& GetDescriptorSetLayout() const;
-    const std::vector<vk::raii::DescriptorSet>& GetDescriptorSets() const;
+    const vk::raii::DescriptorSetLayout& GetGraphicsDescriptorSetLayout() const;
+    const std::vector<vk::raii::DescriptorSet>& GetGraphicsDescriptorSets() const;
 
     const vk::raii::DescriptorSetLayout& GetComputeDescriptorSetLayout() const;
     const std::vector<vk::raii::DescriptorSet>& GetComputeDescriptorSets() const;
@@ -64,20 +65,18 @@ private:
     vk::raii::Buffer m_indexBuffer = nullptr;
     vk::raii::DeviceMemory m_indexBufferMemory = nullptr;
 
-    std::vector<vk::raii::Buffer> m_uniformBuffers;
-    std::vector<vk::raii::DeviceMemory> m_uniformBuffersMemory;
-    std::vector<void*> m_uniformBuffersMapped;
-
-    vk::raii::DescriptorSetLayout m_descriptorSetLayout = nullptr;
+    vk::raii::DescriptorSetLayout m_graphicsDescriptorSetLayout = nullptr;
+    std::vector<vk::raii::DescriptorSet> m_graphicsDescriptorSets;
+    
     vk::raii::DescriptorPool m_descriptorPool = nullptr;
-    std::vector<vk::raii::DescriptorSet> m_descriptorSets;
 
-    std::vector<vk::raii::Buffer> m_shaderStorageBuffers;
-    std::vector<vk::raii::DeviceMemory> m_shaderStorageBuffersMemory;
+    std::vector<vk::raii::Buffer> m_cameraUbos;
+    std::vector<vk::raii::DeviceMemory> m_cameraUbosMemory;
+    std::vector<void*> m_cameraUbosMapped;
 
-    std::vector<vk::raii::Buffer> m_computeUniformBuffers;
-    std::vector<vk::raii::DeviceMemory> m_computeUniformBuffersMemory;
-    std::vector<void*> m_computeUniformBuffersMapped;
+    std::vector<vk::raii::Buffer> m_parameterUbos;
+    std::vector<vk::raii::DeviceMemory> m_parameterUbosMemory;
+    std::vector<void*> m_parameterUbosMapped;
 
     vk::raii::DescriptorSetLayout m_computeDescriptorSetLayout = nullptr;
     std::vector<vk::raii::DescriptorSet> m_computeDescriptorSets;
@@ -92,7 +91,8 @@ private:
     vk::raii::ImageView m_envImageView = nullptr;
     vk::raii::Sampler m_envImageSampler = nullptr;
 
-    buffer_data::uniform::ComputeUniformBufferObject m_computeUbo{};
+    buffer_data::uniform::CameraUbo m_cameraUbo{};
+    buffer_data::uniform::ParameterUbo m_parameterUbo{};
 
     std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> CreateBuffer(
         vk::DeviceSize size,
@@ -108,11 +108,11 @@ private:
 
     void CreateVertexBuffer();
     void CreateIndexBuffer();
-    void CreateUniformBuffers();
 
-    void CreateDescriptorSetLayout();
     void CreateDescriptorPool();
-    void CreateDescriptorSets();
+
+    void CreateGraphicsDescriptorSetLayout();
+    void CreateGraphicsDescriptorSets();
 
     void CreateComputeUniformBuffers();
 

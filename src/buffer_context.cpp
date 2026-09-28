@@ -30,12 +30,11 @@ BufferContext::BufferContext(
 void BufferContext::Init() {
     CreateVertexBuffer();
     CreateIndexBuffer();
-    CreateUniformBuffers();
     CreateEnvironmentTexture(ENV_PATH);
     CreateComputeStorageImage();
-    CreateDescriptorSetLayout();
+    CreateGraphicsDescriptorSetLayout();
     CreateDescriptorPool();
-    CreateDescriptorSets();
+    CreateGraphicsDescriptorSets();
     CreateComputeUniformBuffers();
     CreateComputeDescriptorSetLayout();
     CreateComputeDescriptorSets();
@@ -44,41 +43,19 @@ void BufferContext::Init() {
 /**
  * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
  */
-void BufferContext::UpdateUniformBuffer(uint32_t frameIndex) {
-    vk::Extent2D swapChainExtent = m_swapChain.GetExtent();
-
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<
-            float, std::chrono::seconds::period
-        >(currentTime - startTime).count();
-
-    buffer_data::uniform::UniformBufferObject ubo{};
-    ubo.model = rotate(
-        glm::mat4(1.0f),
-        time * glm::radians(90.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
-    ubo.view = lookAt(
-        glm::vec3(2.0f, 2.0f, 2.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
-    ubo.proj = glm::perspective(
-        glm::radians(45.0f),
-        static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height),
-        0.1f,
-        10.0f
-    );
-
-    memcpy(m_uniformBuffersMapped[frameIndex], &ubo, sizeof(ubo));
+void BufferContext::UpdateCameraUbo() {
+    m_cameraUbo.pos = glm::vec3(0.0);
+    m_cameraUbo.fov = glm::radians(45.0f);
 }
 
-void BufferContext::UpdateComputeUniformBuffer(uint32_t frameIndex, float deltaTime) {
-    m_computeUbo.deltaTime = deltaTime;
-    m_computeUbo.time += m_computeUbo.deltaTime;
-    memcpy(m_computeUniformBuffersMapped[frameIndex], &m_computeUbo, sizeof(m_computeUbo));
+void BufferContext::UpdateParameterUbo(float deltaTime) {
+    m_parameterUbo.deltaTime = deltaTime;
+    m_parameterUbo.time += m_parameterUbo.deltaTime;
+}
+
+void BufferContext::MapComputeUboMemory(uint32_t frameIndex) {
+    memcpy(m_cameraUbosMapped[frameIndex], &m_cameraUbo, sizeof(m_cameraUbo));
+    memcpy(m_parameterUbosMapped[frameIndex], &m_parameterUbo, sizeof(m_parameterUbo));
 }
 
 /**
@@ -98,12 +75,12 @@ const vk::raii::Buffer& BufferContext::GetIndexBuffer() const {
     return m_indexBuffer;
 }
 
-const vk::raii::DescriptorSetLayout& BufferContext::GetDescriptorSetLayout() const {
-    return m_descriptorSetLayout;
+const vk::raii::DescriptorSetLayout& BufferContext::GetGraphicsDescriptorSetLayout() const {
+    return m_graphicsDescriptorSetLayout;
 }
 
-const std::vector<vk::raii::DescriptorSet>& BufferContext::GetDescriptorSets() const {
-    return m_descriptorSets;
+const std::vector<vk::raii::DescriptorSet>& BufferContext::GetGraphicsDescriptorSets() const {
+    return m_graphicsDescriptorSets;
 }
 
 const vk::raii::DescriptorSetLayout& BufferContext::GetComputeDescriptorSetLayout() const {
@@ -271,37 +248,10 @@ void BufferContext::CreateIndexBuffer() {
 /**
  * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
  */
-void BufferContext::CreateUniformBuffers() {
-    for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
-        vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::UniformBufferObject);
-        auto [buffer, bufferMem] = CreateBuffer(
-            bufferSize,
-            vk::BufferUsageFlagBits::eUniformBuffer,
-            vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent
-        );
-        m_uniformBuffers.emplace_back(std::move(buffer));
-        m_uniformBuffersMemory.emplace_back(std::move(bufferMem));
-        m_uniformBuffersMapped.emplace_back(
-            m_uniformBuffersMemory.back().mapMemory(0, bufferSize)
-        );
-    }
-}
-
-/**
- * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/00_Descriptor_set_layout_and_buffer.html
- */
-void BufferContext::CreateDescriptorSetLayout() {
+void BufferContext::CreateGraphicsDescriptorSetLayout() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
 
-    std::array<vk::DescriptorSetLayoutBinding, 2> layoutBindings = {{
-        {
-            /* UBO */
-            .binding = 0,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .descriptorCount = 1,
-            .stageFlags = vk::ShaderStageFlagBits::eVertex
-        },
+    std::array<vk::DescriptorSetLayoutBinding, 1> layoutBindings = {{
         {
             /* Combined image sampler */
             .binding = 1,
@@ -316,7 +266,7 @@ void BufferContext::CreateDescriptorSetLayout() {
         .pBindings = layoutBindings.data()
     };
 
-    m_descriptorSetLayout = vk::raii::DescriptorSetLayout(device, layoutInfo);
+    m_graphicsDescriptorSetLayout = vk::raii::DescriptorSetLayout(device, layoutInfo);
 }
 
 /**
@@ -354,12 +304,12 @@ void BufferContext::CreateDescriptorPool() {
 /**
  * @see https://docs.vulkan.org/tutorial/latest/05_Uniform_buffers/01_Descriptor_pool_and_sets.html
  */
-void BufferContext::CreateDescriptorSets() {
+void BufferContext::CreateGraphicsDescriptorSets() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
 
     std::vector<vk::DescriptorSetLayout> layouts(
         m_syncContext.maxFramesInFlight,
-        *m_descriptorSetLayout
+        *m_graphicsDescriptorSetLayout
     );
     vk::DescriptorSetAllocateInfo allocInfo{
         .descriptorPool = m_descriptorPool,
@@ -367,14 +317,9 @@ void BufferContext::CreateDescriptorSets() {
         .pSetLayouts = layouts.data()
     };
 
-    m_descriptorSets = device.allocateDescriptorSets(allocInfo);
+    m_graphicsDescriptorSets = device.allocateDescriptorSets(allocInfo);
 
     for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
-        vk::DescriptorBufferInfo bufferInfo{
-            .buffer = m_uniformBuffers[i],
-            .offset = 0,
-            .range = sizeof(buffer_data::uniform::UniformBufferObject)
-        };
         vk::DescriptorImageInfo samplerInfo{
             .sampler = *m_computeStorageImageSampler,
             .imageView = *m_computeStorageImageView,
@@ -383,15 +328,7 @@ void BufferContext::CreateDescriptorSets() {
 
         std::array descriptorWrites{
             vk::WriteDescriptorSet{
-                .dstSet = m_descriptorSets[i],
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eUniformBuffer,
-                .pBufferInfo = &bufferInfo
-            },
-            vk::WriteDescriptorSet{
-                .dstSet = m_descriptorSets[i],
+                .dstSet = m_graphicsDescriptorSets[i],
                 .dstBinding = 1,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
@@ -409,17 +346,30 @@ void BufferContext::CreateDescriptorSets() {
  */
 void BufferContext::CreateComputeUniformBuffers() {
     for (size_t i = 0; i < m_syncContext.maxFramesInFlight; i++) {
-        vk::DeviceSize bufferSize = sizeof(buffer_data::uniform::ComputeUniformBufferObject);
-        auto [buffer, bufferMem] = CreateBuffer(
-            bufferSize,
+        vk::DeviceSize cameraUboSize = sizeof(buffer_data::uniform::CameraUbo);
+        auto [cameraUbo, cameraUboMemory] = CreateBuffer(
+            cameraUboSize,
             vk::BufferUsageFlagBits::eUniformBuffer,
             vk::MemoryPropertyFlagBits::eHostVisible |
             vk::MemoryPropertyFlagBits::eHostCoherent
         );
-        m_computeUniformBuffers.emplace_back(std::move(buffer));
-        m_computeUniformBuffersMemory.emplace_back(std::move(bufferMem));
-        m_computeUniformBuffersMapped.emplace_back(
-            m_computeUniformBuffersMemory.back().mapMemory(0, bufferSize)
+        m_cameraUbos.emplace_back(std::move(cameraUbo));
+        m_cameraUbosMemory.emplace_back(std::move(cameraUboMemory));
+        m_cameraUbosMapped.emplace_back(
+            m_cameraUbosMemory.back().mapMemory(0, cameraUboSize)
+        );
+
+        vk::DeviceSize parameterUboSize = sizeof(buffer_data::uniform::CameraUbo);
+        auto [parameterUbo, parameterUboMemory] = CreateBuffer(
+            parameterUboSize,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent
+        );
+        m_parameterUbos.emplace_back(std::move(parameterUbo));
+        m_parameterUbosMemory.emplace_back(std::move(parameterUboMemory));
+        m_parameterUbosMapped.emplace_back(
+            m_parameterUbosMemory.back().mapMemory(0, parameterUboSize)
         );
     }
 }
@@ -430,29 +380,36 @@ void BufferContext::CreateComputeUniformBuffers() {
 void BufferContext::CreateComputeDescriptorSetLayout() {
     const vk::raii::Device& device = m_vulkanContext.GetDevice();
 
-    std::array layoutBindings{
-        vk::DescriptorSetLayoutBinding(
-            0,
-            vk::DescriptorType::eUniformBuffer,
-            1,
-            vk::ShaderStageFlagBits::eCompute,
-            nullptr
-        ),
-        vk::DescriptorSetLayoutBinding(
-            1,
-            vk::DescriptorType::eStorageImage,
-            1,
-            vk::ShaderStageFlagBits::eCompute, 
-            nullptr
-        ),
-        vk::DescriptorSetLayoutBinding(
-            2,
-            vk::DescriptorType::eCombinedImageSampler,
-            1,
-            vk::ShaderStageFlagBits::eCompute,
-            nullptr
-        )
-    };
+    std::array<vk::DescriptorSetLayoutBinding, 4> layoutBindings {{
+        {
+            /* Camera UBO */
+            .binding = 0,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eCompute
+        },
+        {
+            /* Parameter UBO */
+            .binding = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eCompute,
+        },
+        {
+            /* Compute storage image */
+            .binding = 2,
+            .descriptorType = vk::DescriptorType::eStorageImage,
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eCompute, 
+        },
+        {
+            /* Environment map */
+            .binding = 3,
+            .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+            .descriptorCount = 1,
+            .stageFlags = vk::ShaderStageFlagBits::eCompute,
+        }
+    }};
 
     vk::DescriptorSetLayoutCreateInfo layoutInfo{
         .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
@@ -477,16 +434,24 @@ void BufferContext::CreateComputeDescriptorSets() {
     m_computeDescriptorSets = device.allocateDescriptorSets(allocInfo);
 
     for (size_t i = 0; i < maxFramesInFlight; i++) {
-        vk::DescriptorBufferInfo bufferInfo(
-            m_computeUniformBuffers[i],
+        // Camera UBO
+        vk::DescriptorBufferInfo cameraUboInfo{
+            .buffer = m_cameraUbos[i],
+            .offset = 0,
+            .range = sizeof(buffer_data::uniform::CameraUbo)
+        };
+        // Parameter UBO
+        vk::DescriptorBufferInfo parameterUboInfo{
+            m_parameterUbos[i],
             0,
-            sizeof(buffer_data::uniform::ComputeUniformBufferObject)
-        );
-
+            sizeof(buffer_data::uniform::ParameterUbo)
+        };
+        // Compute storage image
         vk::DescriptorImageInfo storageImageInfo{
             .imageView = *m_computeStorageImageView,
             .imageLayout = vk::ImageLayout::eGeneral
         };
+        // Environment map
         vk::DescriptorImageInfo envInfo{
             .sampler = *m_envImageSampler,
             .imageView = *m_envImageView,
@@ -494,19 +459,30 @@ void BufferContext::CreateComputeDescriptorSets() {
         };
 
         std::array descriptorWrites{
+            // Camera UBO
             vk::WriteDescriptorSet{
-                .dstSet = *m_computeDescriptorSets[i],
+                .dstSet = m_computeDescriptorSets[i],
                 .dstBinding = 0,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
                 .descriptorType = vk::DescriptorType::eUniformBuffer,
-                .pImageInfo = nullptr,
-                .pBufferInfo = &bufferInfo,
-                .pTexelBufferView = nullptr
+                .pBufferInfo = &cameraUboInfo
             },
+            // Parameter UBO
             vk::WriteDescriptorSet{
                 .dstSet = *m_computeDescriptorSets[i],
                 .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .pImageInfo = nullptr,
+                .pBufferInfo = &parameterUboInfo,
+                .pTexelBufferView = nullptr
+            },
+            // Compute storage image
+            vk::WriteDescriptorSet{
+                .dstSet = *m_computeDescriptorSets[i],
+                .dstBinding = 2,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
                 .descriptorType = vk::DescriptorType::eStorageImage,
@@ -514,9 +490,10 @@ void BufferContext::CreateComputeDescriptorSets() {
                 .pBufferInfo = nullptr,
                 .pTexelBufferView = nullptr
             },
+            // Environment map
             vk::WriteDescriptorSet{
                 .dstSet = *m_computeDescriptorSets[i],
-                .dstBinding = 2,
+                .dstBinding = 3,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
                 .descriptorType = vk::DescriptorType::eCombinedImageSampler,
