@@ -136,9 +136,10 @@ void Window::ProcessMouseMovement(double xpos, double ypos) {
         m_firstMouse = false;
     }
 
-    double dx = xpos - m_lastX;
+    /* Flip dx and dy for more natural mouse-camera movement */
+    double dx = -(xpos - m_lastX);
     // Reversed; Vulkan window y dimension grows downwards
-    double dy = m_lastY - ypos;
+    double dy = -(m_lastY - ypos);
     m_lastX = xpos;
     m_lastY = ypos;
 
