@@ -1,4 +1,4 @@
-# Coordinate Transformations
+# Transformations
 
 ## Cartesian to Spherical
 

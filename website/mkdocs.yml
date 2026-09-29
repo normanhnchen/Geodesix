@@ -15,14 +15,25 @@ nav:
 - Documentation:
   - The Camera:
     - The_Camera/Overview.md
+  - Foundations:
+    - Foundations/General_Relativity.md
+    - Foundations/Riemannian_Geometry.md
+    - Foundations/Manifolds.md
+    - Foundations/The_Metric.md
+    - Coordinate Systems:
+      - Foundations/Coordinate_Systems/Overview.md
+      - Foundations/Coordinate_Systems/Transformations.md
+  - Black Holes:
+    - Black_Holes/Overview.md
+    - Black_Holes/Frame-Dragging.md
+    - Black_Holes/Schwarzschild_Black_Holes.md
+    - Black_Holes/Kerr_Black_Holes.md
+    - Black_Holes/Doppler_Shifts.md
+    - Black_Holes/Redshifts.md
   - Rays:
     - Rays/Overview.md
     - Rays/Coordinate_Systems.md
     - Rays/Coordinate_Transformations.md
-  - Black Holes:
-    - Black_Holes/Overview.md
-    - Black_Holes/Doppler_Shifts.md
-    - Black_Holes/Redshifts.md
   - Vulkan:
     - Vulkan/Overview.md
     - Vulkan/Resource_Acquisition_Is_Initialization.md

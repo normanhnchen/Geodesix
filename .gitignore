@@ -1,6 +1,9 @@
 # Github Pages Website
 website/site/
 
+# Assets
+src/assets/
+
 # Prerequisites
 *.d
 
