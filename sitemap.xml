@@ -2,74 +2,114 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/license/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Black_Holes/Doppler_Shifts/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Black_Holes/Overview/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Black_Holes/Redshifts/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Rays/Coordinate_Systems/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Rays/Coordinate_Transformations/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Rays/Overview/</loc>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/The_Camera/Overview/</loc>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Commands/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Dynamic_Rendering/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Dynamic_States/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Fences/</loc>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Fixed-Functions/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Frames_In_Flight/</loc>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Image_Views/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Overview/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Pipelines/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Queues/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Resource_Acquisition_Is_Initialization/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Semaphores/</loc>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Shaders/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/The_Logical_Device/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/The_Physical_Device/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/The_Swap_Chain/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/The_Vulkan_Instance/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Validation_Layers/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
     <url>
          <loc>https://github.com/normanhnchen/Geodesix/Vulkan/Window_Surface/</loc>
-         <lastmod>2026-09-26</lastmod>
+         <lastmod>2026-09-29</lastmod>
     </url>
 </urlset>
