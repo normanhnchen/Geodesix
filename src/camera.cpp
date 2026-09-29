@@ -16,6 +16,10 @@ void Camera::Init() {
     m_moveSensitivity = 0.1f;
     m_scrollSensitivity = 1.0f;
 
+    m_targetFov = m_fov;
+    m_baseFov = m_fov;
+    m_zoomSmoothing = 20.0f;
+
     m_minFov = glm::radians(1.0f);
     m_maxFov = glm::radians(115.0f);
 }
@@ -31,11 +35,13 @@ void Camera::UpdateVectors() {
     m_up = glm::normalize(glm::cross(m_right, m_front));
 }
 
-void Camera::ClampFov() {
-    if (m_fov < m_minFov) {
-        m_fov = m_minFov;
-    }
-    if (m_fov > m_maxFov) {
-        m_fov = m_maxFov;
-    }
+void Camera::SetTargetZoom(float scrollOffset) {
+    float zoomFac = scrollOffset * m_scrollSensitivity;
+    m_targetFov -= glm::radians(zoomFac);
+    m_targetFov = glm::clamp(m_targetFov, m_minFov, m_maxFov);
+}
+
+void Camera::UpdateZoom(float deltaTime) {
+    float t = 1.0f - std::exp(-m_zoomSmoothing * deltaTime);
+    m_fov = glm::mix(m_fov, m_targetFov, t);
 }

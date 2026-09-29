@@ -14,7 +14,7 @@
 
 
 const std::filesystem::path ASSETS_DIR = CMAKE_ASSETS_DIR;
-const std::string ENV_PATH = std::string(ASSETS_DIR / "starmap_4k.exr");
+const std::string ENV_PATH = std::string(ASSETS_DIR / "starmap_16k.exr");
 
 // Forward declaration
 // Used because BufferContext and CommandContext circularly depend on eachother

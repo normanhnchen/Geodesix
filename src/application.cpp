@@ -55,7 +55,15 @@ void Application::InitVulkan() {
  * calls.
  */
 void Application::MainLoop() {
+    float lastTime = 0.0f;
+    float currentTime = 0.0f;
     while (!m_window.ShouldClose()) {
+        float currentTime = static_cast<float>(glfwGetTime());
+        float deltaTime = static_cast<float>(currentTime - lastTime);
+        lastTime = currentTime;
+
+        m_camera.UpdateZoom(deltaTime);
+
         m_window.PollEvents();
         m_renderer.DrawFrame();
     }

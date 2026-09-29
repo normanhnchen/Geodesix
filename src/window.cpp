@@ -157,7 +157,5 @@ void Window::ProcessMouseMovement(double xpos, double ypos) {
 }
 
 void Window::ProcessMouseScroll(double xoffset, double yoffset) {
-    float zoomFac = static_cast<float>(yoffset) * m_camera.m_scrollSensitivity;
-    m_camera.m_fov -= glm::radians(zoomFac);
-    m_camera.ClampFov();
+    m_camera.SetTargetZoom(static_cast<float>(yoffset));
 }

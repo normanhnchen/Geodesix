@@ -9,8 +9,8 @@ public:
     void Init();
 
     void UpdateVectors();
-
-    void ClampFov();
+    void SetTargetZoom(float scrollOffset);
+    void UpdateZoom(float deltaTime);
 
     glm::vec3 m_pos;
     float m_yaw;
@@ -21,6 +21,10 @@ public:
     float m_fov;
     float m_moveSensitivity;
     float m_scrollSensitivity;
+
+    float m_targetFov;
+    float m_baseFov;
+    float m_zoomSmoothing;
 
 private:
     glm::vec3 m_worldUp;
