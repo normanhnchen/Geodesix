@@ -4,7 +4,7 @@
 #include "src/shaders/constants.glsl"
 #include "src/shaders/compute/structs.glsl"
 #include "src/shaders/compute/bindings.glsl"
-#include "src/shaders/compute/util.glsl"
+#include "src/shaders/util/common.glsl"
 
 
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
@@ -37,7 +37,7 @@ void main() {
 
     CameraRay cameraRay = GenerateCameraRay(pixelCoords, imageSize);
     cameraRay.dir = normalize(cameraRay.dir);
-    vec3 envColor = SampleEquirectangular(envMap, cameraRay.dir);
+    vec3 envColor = SampleEquirectangularTexture(envMap, cameraRay.dir);
 
     imageStore(computeStorageImage, pixelCoords, vec4(envColor, 1.0));
 }
