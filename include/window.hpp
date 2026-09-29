@@ -35,8 +35,6 @@ public:
 
     VkSurfaceKHR CreateVulkanSurface(VkInstance instance);
 
-    void ProcessMouseMovement(double xpos, double ypos);
-
 private:
     Camera& m_camera;
     BufferContext* m_bufferContext = nullptr;
@@ -54,4 +52,8 @@ private:
 
     static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
     static void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+    static void MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+    void ProcessMouseMovement(double xpos, double ypos);
+    void ProcessMouseScroll(double xoffset, double yoffset);
 };

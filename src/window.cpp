@@ -46,6 +46,7 @@ void Window::Init() {
 
     glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
     glfwSetCursorPosCallback(m_window, CursorPosCallback);
+    glfwSetScrollCallback(m_window, MouseScrollCallback);
 }
 
 void Window::Cleanup() {
@@ -129,6 +130,11 @@ void Window::CursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
     self->ProcessMouseMovement(xpos, ypos);
 }
 
+void Window::MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    auto self = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    self->ProcessMouseScroll(xoffset, yoffset);
+}
+
 void Window::ProcessMouseMovement(double xpos, double ypos) {
     if (m_firstMouse) {
         m_lastX = xpos;
@@ -143,9 +149,15 @@ void Window::ProcessMouseMovement(double xpos, double ypos) {
     m_lastX = xpos;
     m_lastY = ypos;
 
-    m_camera.m_yaw += static_cast<float>(dx) * m_camera.m_sensitivity;
-    m_camera.m_pitch += static_cast<float>(dy) * m_camera.m_sensitivity;
+    m_camera.m_yaw += static_cast<float>(dx) * m_camera.m_moveSensitivity;
+    m_camera.m_pitch += static_cast<float>(dy) * m_camera.m_moveSensitivity;
     m_camera.m_pitch = glm::clamp(m_camera.m_pitch, -89.99f, 89.99f);
 
     m_camera.UpdateVectors();
+}
+
+void Window::ProcessMouseScroll(double xoffset, double yoffset) {
+    float zoomFac = static_cast<float>(yoffset) * m_camera.m_scrollSensitivity;
+    m_camera.m_fov -= glm::radians(zoomFac);
+    m_camera.ClampFov();
 }

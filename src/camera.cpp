@@ -13,7 +13,11 @@ void Camera::Init() {
 
     m_fov = glm::radians(45.0f);
     
-    m_sensitivity = 0.1f;
+    m_moveSensitivity = 0.1f;
+    m_scrollSensitivity = 1.0f;
+
+    m_minFov = glm::radians(1.0f);
+    m_maxFov = glm::radians(115.0f);
 }
 
 void Camera::UpdateVectors() {
@@ -25,4 +29,13 @@ void Camera::UpdateVectors() {
     m_right = glm::normalize(glm::cross(m_front, m_worldUp));
 
     m_up = glm::normalize(glm::cross(m_right, m_front));
+}
+
+void Camera::ClampFov() {
+    if (m_fov < m_minFov) {
+        m_fov = m_minFov;
+    }
+    if (m_fov > m_maxFov) {
+        m_fov = m_maxFov;
+    }
 }
