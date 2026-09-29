@@ -18,6 +18,7 @@ nav:
   - Rays:
     - Rays/Overview.md
     - Rays/Coordinate_Systems.md
+    - Rays/Coordinate_Transformations.md
   - Black Holes:
     - Black_Holes/Overview.md
     - Black_Holes/Doppler_Shifts.md

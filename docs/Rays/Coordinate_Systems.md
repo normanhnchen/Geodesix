@@ -1,12 +1,12 @@
 # Coordinate Systems
 
+## 3D Cartesian Coordinates 
+
+3D Cartesian coordinates are defined with three real numbers $(x, y, z)$ that define the position of a point in three-dimensional space. We define the mathematical convention of $z$ being the upwards direction.
+
 ## UV Coordinates
 
 UV coordinates define a 2D coordinate system used to map a pair of 2D real numbers $(u, v)$ in range $[0, 1]^2$ onto a 3D surface.
-
-## 3D Cartesian Coordinates
-
-3D Cartesian coordinates are defined with three real numbers $(x, y, z)$ that define the position of a point in three-dimensional space. We define the mathematical convention of $z$ being the upwards direction.
 
 ## Spherical Coordinates
 
